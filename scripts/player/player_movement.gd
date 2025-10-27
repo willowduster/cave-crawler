@@ -1,12 +1,13 @@
 extends CharacterBody2D
 
-# Isometric click-to-move player controller (Diablo 2 style)
+# Isometric click-to-move player controller with A* pathfinding
 
 # Movement constants
 const SPEED = 150.0
 const ACCELERATION = 600.0
 const FRICTION = 800.0
 const ARRIVAL_DISTANCE = 5.0  # How close to target before stopping
+const TILE_SIZE = 64  # Tile size for pathfinding
 
 # Movement state
 var target_position: Vector2 = Vector2.ZERO
@@ -14,11 +15,21 @@ var has_target: bool = false
 var is_attacking: bool = false
 var mouse_held: bool = false  # Track if left mouse button is held
 
+# Pathfinding
+var path: Array = []  # Array of Vector2 waypoints
+var current_waypoint_index: int = 0
+var pathfinder: AStarPathfinder = null
+
 # Direction facing (in radians, 0 = right)
 var facing_angle: float = 0.0
 
 func _ready():
-	print("Isometric player ready - Click or hold to move!")
+	print("Isometric player with A* pathfinding ready - Click or hold to move!")
+
+## Set the pathfinder reference
+func set_pathfinder(pf: AStarPathfinder) -> void:
+	pathfinder = pf
+	print("Pathfinder connected to player!")
 
 func _input(event):
 	# Left click to move
@@ -27,10 +38,7 @@ func _input(event):
 			if event.pressed:
 				# Mouse button pressed - start following
 				mouse_held = true
-				target_position = get_global_mouse_position()
-				has_target = true
-				is_attacking = false
-				print("Moving to: ", target_position)
+				_set_move_target(get_global_mouse_position())
 			else:
 				# Mouse button released - stop following cursor
 				mouse_held = false
@@ -41,23 +49,70 @@ func _input(event):
 			print("Attack at: ", attack_target)
 			is_attacking = true
 			mouse_held = false
+			has_target = false
+			path.clear()
 			# TODO: Implement attack logic
+
+## Set a new movement target and calculate path
+func _set_move_target(pos: Vector2) -> void:
+	if pathfinder == null:
+		# Fallback to direct movement if no pathfinder
+		target_position = pos
+		has_target = true
+		is_attacking = false
+		path.clear()
+		print("Moving directly to: ", pos)
+		return
+	
+	# Calculate path using A*
+	path = pathfinder.find_path(global_position, pos, TILE_SIZE)
+	
+	if path.size() > 0:
+		current_waypoint_index = 0
+		has_target = true
+		is_attacking = false
+		# Set first waypoint as target
+		target_position = path[current_waypoint_index]
+		print("Path found with %d waypoints to: %s" % [path.size(), pos])
+	else:
+		# No path found - try direct movement
+		target_position = pos
+		has_target = true
+		is_attacking = false
+		path.clear()
+		print("No path found, moving directly to: ", pos)
 
 func _physics_process(delta):
 	# If mouse is held, continuously update target to cursor position
 	if mouse_held:
-		target_position = get_global_mouse_position()
-		has_target = true
-		is_attacking = false
+		_set_move_target(get_global_mouse_position())
 	
 	if has_target and not is_attacking:
-		# Calculate direction to target
+		# If following a path, check if we've reached current waypoint
+		if path.size() > 0 and current_waypoint_index < path.size():
+			var waypoint_distance = global_position.distance_to(target_position)
+			
+			# If we've reached the current waypoint, move to next
+			if waypoint_distance <= ARRIVAL_DISTANCE * 2:  # Slightly larger threshold for waypoints
+				current_waypoint_index += 1
+				
+				if current_waypoint_index < path.size():
+					# Move to next waypoint
+					target_position = path[current_waypoint_index]
+				else:
+					# Reached end of path
+					if not mouse_held:
+						has_target = false
+						path.clear()
+		
+		# Calculate direction to current target
 		var direction = (target_position - global_position).normalized()
 		var distance = global_position.distance_to(target_position)
 		
-		# Check if we've arrived (only stop if mouse not held)
+		# Check if we've arrived at final destination
 		if distance <= ARRIVAL_DISTANCE and not mouse_held:
 			has_target = false
+			path.clear()
 			# Stop moving
 			velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
 		else:
