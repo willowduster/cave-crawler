@@ -1,9 +1,8 @@
+#!/usr/bin/env python3
 """
-Generic Enemy Sprite Generator
-Creates animated enemy sprites with walk, attack, and death animations.
-Outputs sprite sheets for use in Godot.
-
-Usage: Run via run_blender.ps1 create_enemy_sprite.py --enemy-name <name>
+Enemy Sprite Generator for Godot
+Generates animated 2D sprites from 3D Blender models
+Creates puddle-style slime enemy with splash and dry-up animations
 """
 
 import bpy
@@ -12,54 +11,78 @@ import os
 import sys
 from mathutils import Vector
 
+# Get the project root directory (2 levels up from blender_scripts/)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+
 # Parse command line arguments
-def get_arg(name, default=None):
-    """Get command line argument value"""
-    args = sys.argv
-    if "--" in args:
-        args = args[args.index("--") + 1:]
-    
-    for i, arg in enumerate(args):
-        if arg == name and i + 1 < len(args):
-            return args[i + 1]
-    return default
+args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 
-# Enemy configuration
-ENEMY_NAME = get_arg("--enemy-name", "slime")
-BODY_COLOR = tuple(map(float, get_arg("--body-color", "0.2,0.8,0.3,1.0").split(",")))
-EYE_COLOR = tuple(map(float, get_arg("--eye-color", "1.0,1.0,1.0,1.0").split(",")))
-SIZE = float(get_arg("--size", "1.0"))
-OUTPUT_DIR = get_arg("--output-dir", "C:/Users/Ben/code/cave-crawler/assets/enemies")
+# Default values
+ENEMY_NAME = "slime"
+BODY_COLOR = (0.2, 0.8, 0.3, 1.0)  # Green slime
+EYE_COLOR = (1.0, 1.0, 1.0, 1.0)   # White eyes
+SIZE = 1.0
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "assets", "enemies")
 
-# Animation settings
+# Parse arguments
+i = 0
+while i < len(args):
+    if args[i] == "--enemy-name" and i + 1 < len(args):
+        ENEMY_NAME = args[i + 1]
+        i += 2
+    elif args[i] == "--body-color" and i + 1 < len(args):
+        color_values = [float(x) for x in args[i + 1].split(',')]
+        BODY_COLOR = tuple(color_values)
+        i += 2
+    elif args[i] == "--eye-color" and i + 1 < len(args):
+        color_values = [float(x) for x in args[i + 1].split(',')]
+        EYE_COLOR = tuple(color_values)
+        i += 2
+    elif args[i] == "--size" and i + 1 < len(args):
+        SIZE = float(args[i + 1])
+        i += 2
+    elif args[i] == "--output-dir" and i + 1 < len(args):
+        OUTPUT_DIR = args[i + 1]
+        i += 2
+    else:
+        i += 1
+
+# Constants
 SPRITE_SIZE = 64
-FRAMES_PER_ANIMATION = {
-    "idle": 4,
-    "walk": 8,
-    "attack": 6,
-    "death": 8
-}
+FPS = 24
+
+print("\n" + "="*60)
+print(f"Generating Enemy: {ENEMY_NAME}")
+print(f"Size: {SIZE}")
+print(f"Body Color: {BODY_COLOR}")
+print(f"Output: {os.path.join(OUTPUT_DIR, ENEMY_NAME)}")
+print("="*60 + "\n")
 
 def clear_scene():
-    """Clear all objects from the scene"""
+    """Remove all objects from the scene"""
     bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.object.delete(use_global=False)
+    bpy.ops.object.delete()
 
-def setup_scene():
-    """Setup camera, lighting, and render settings"""
-    # Add camera
-    bpy.ops.object.camera_add(location=(0, -5, 3))
+def setup_camera():
+    """Setup orthographic camera for sprite rendering"""
+    bpy.ops.object.camera_add(location=(0, -8, 2))
     camera = bpy.context.object
-    camera.rotation_euler = (math.radians(60), 0, 0)
+    camera.rotation_euler = (math.radians(75), 0, 0)
+    camera.data.type = 'ORTHO'
+    camera.data.ortho_scale = 3.5
     bpy.context.scene.camera = camera
-    
-    # Add sun light
+    return camera
+
+def setup_lighting():
+    """Setup three-point lighting"""
+    # Key light
     bpy.ops.object.light_add(type='SUN', location=(5, -5, 10))
-    sun = bpy.context.object
-    sun.data.energy = 2.0
-    sun.rotation_euler = (math.radians(45), 0, math.radians(45))
+    key = bpy.context.object
+    key.data.energy = 1.5
+    key.rotation_euler = (math.radians(45), 0, math.radians(45))
     
-    # Add fill light
+    # Fill light
     bpy.ops.object.light_add(type='AREA', location=(-3, -3, 5))
     fill = bpy.context.object
     fill.data.energy = 0.5
@@ -78,74 +101,88 @@ def setup_scene():
     bg = scene.world.node_tree.nodes['Background']
     bg.inputs[0].default_value = (0, 0, 0, 0)  # Transparent
 
-def create_enemy_body():
-    """Create the enemy body (generic blob/slime shape)"""
-    # Create main body sphere
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=SIZE, location=(0, 0, SIZE * 0.5))
+def create_puddle_body():
+    """Create a puddle-style slime body"""
+    # Create a flat cylinder for the puddle base
+    bpy.ops.mesh.primitive_cylinder_add(
+        vertices=32,
+        radius=SIZE * 0.8,
+        depth=SIZE * 0.15,
+        location=(0, 0, SIZE * 0.08)
+    )
     body = bpy.context.object
     body.name = f"{ENEMY_NAME}_body"
     
-    # Scale to make it blob-like (squash vertically)
-    body.scale = (1.0, 1.0, 0.7)
-    bpy.ops.object.transform_apply(scale=True)
+    # Switch to edit mode for deformation
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
     
-    # Add subdivision and smooth
-    bpy.ops.object.modifier_add(type='SUBSURF')
-    body.modifiers["Subdivision"].levels = 2
+    # Add random deformation for organic puddle shape
+    bpy.ops.transform.vertex_random(offset=0.2, uniform=0.15, seed=42)
+    
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Add subdivision for smooth organic shape
+    subdiv = body.modifiers.new(name="Subdivision", type='SUBSURF')
+    subdiv.levels = 3
+    subdiv.render_levels = 3
+    
+    # Smooth shading
     bpy.ops.object.shade_smooth()
     
-    # Create material
+    # Create glossy slime material with transparency
     mat = bpy.data.materials.new(name=f"{ENEMY_NAME}_material")
     mat.use_nodes = True
+    mat.blend_method = 'BLEND'
     nodes = mat.node_tree.nodes
     nodes.clear()
     
-    # Add Principled BSDF
+    # Principled BSDF for glossy slime
     bsdf = nodes.new(type='ShaderNodeBsdfPrincipled')
     bsdf.location = (0, 0)
     bsdf.inputs['Base Color'].default_value = BODY_COLOR
     bsdf.inputs['Metallic'].default_value = 0.0
-    bsdf.inputs['Roughness'].default_value = 0.3
+    bsdf.inputs['Roughness'].default_value = 0.15
+    bsdf.inputs['Transmission Weight'].default_value = 0.6
+    bsdf.inputs['IOR'].default_value = 1.33
+    bsdf.inputs['Alpha'].default_value = 0.9
+    bsdf.inputs['Sheen Weight'].default_value = 0.3
     
-    # Add output
+    # Output
     output = nodes.new(type='ShaderNodeOutputMaterial')
     output.location = (300, 0)
     mat.node_tree.links.new(bsdf.outputs['BSDF'], output.inputs['Surface'])
     
     # Assign material
-    if body.data.materials:
-        body.data.materials[0] = mat
-    else:
-        body.data.materials.append(mat)
+    body.data.materials.append(mat)
     
     return body
 
 def create_eyes(body):
-    """Create enemy eyes"""
+    """Create floating eyes in the puddle"""
     eyes = []
     
-    for i, x_offset in enumerate([-0.3, 0.3]):
+    for i, x_offset in enumerate([-0.25, 0.25]):
         # Create eye sphere
         bpy.ops.mesh.primitive_uv_sphere_add(
-            radius=SIZE * 0.15,
-            location=(x_offset * SIZE, SIZE * 0.4, SIZE * 0.8)
+            radius=SIZE * 0.12,
+            location=(x_offset * SIZE, 0, SIZE * 0.15)
         )
         eye = bpy.context.object
         eye.name = f"{ENEMY_NAME}_eye_{i}"
+        bpy.ops.object.shade_smooth()
         
-        # Create eye material
-        mat = bpy.data.materials.new(name=f"{ENEMY_NAME}_eye_material")
+        # Create eye material with emission
+        mat = bpy.data.materials.new(name=f"{ENEMY_NAME}_eye_material_{i}")
         mat.use_nodes = True
         nodes = mat.node_tree.nodes
         bsdf = nodes['Principled BSDF']
         bsdf.inputs['Base Color'].default_value = EYE_COLOR
-        bsdf.inputs['Emission Strength'].default_value = 0.5
+        bsdf.inputs['Emission Color'].default_value = EYE_COLOR
+        bsdf.inputs['Emission Strength'].default_value = 0.8
+        bsdf.inputs['Roughness'].default_value = 0.1
         
-        # Assign material
-        if eye.data.materials:
-            eye.data.materials[0] = mat
-        else:
-            eye.data.materials.append(mat)
+        eye.data.materials.append(mat)
         
         # Parent to body
         eye.parent = body
@@ -154,164 +191,190 @@ def create_eyes(body):
     return eyes
 
 def animate_idle(body, eyes, start_frame, end_frame):
-    """Create idle animation - gentle breathing/bobbing"""
-    mid_frame = (start_frame + end_frame) // 2
+    """Gentle breathing/bobbing animation"""
+    scene = bpy.context.scene
     
-    # Body bobbing
-    body.location = (0, 0, 0)
-    body.keyframe_insert(data_path="location", frame=start_frame)
+    # Clear existing animation
+    if body.animation_data:
+        body.animation_data_clear()
     
-    body.location = (0, 0, SIZE * 0.1)
-    body.keyframe_insert(data_path="location", frame=mid_frame)
+    frames_per_cycle = end_frame - start_frame + 1
     
-    body.location = (0, 0, 0)
-    body.keyframe_insert(data_path="location", frame=end_frame)
-    
-    # Slight scale breathing
-    body.scale = (1.0, 1.0, 1.0)
-    body.keyframe_insert(data_path="scale", frame=start_frame)
-    
-    body.scale = (1.02, 1.02, 0.98)
-    body.keyframe_insert(data_path="scale", frame=mid_frame)
-    
-    body.scale = (1.0, 1.0, 1.0)
-    body.keyframe_insert(data_path="scale", frame=end_frame)
+    for frame in range(start_frame, end_frame + 1):
+        scene.frame_set(frame)
+        t = (frame - start_frame) / frames_per_cycle
+        
+        # Gentle pulsing - expand and contract slightly
+        pulse = 1.0 + math.sin(t * math.pi * 2) * 0.05
+        body.scale = (pulse, pulse, 1.0 + math.sin(t * math.pi * 2) * 0.1)
+        body.keyframe_insert(data_path="scale", frame=frame)
+        
+        # Eyes bob slightly
+        for eye in eyes:
+            bob = math.sin(t * math.pi * 2) * 0.03
+            eye.location.z = SIZE * 0.15 + bob
+            eye.keyframe_insert(data_path="location", frame=frame)
 
 def animate_walk(body, eyes, start_frame, end_frame):
-    """Create walk animation - bouncing movement"""
-    frames = end_frame - start_frame
-    step_frames = frames // 2
+    """Sliding/oozing movement animation"""
+    scene = bpy.context.scene
     
-    for i in range(3):
-        frame = start_frame + (i * step_frames // 2)
-        if i % 2 == 0:
-            # Down position (compressed)
-            body.location = (0, 0, SIZE * -0.1)
-            body.scale = (1.15, 1.15, 0.85)
-        else:
-            # Up position (stretched)
-            body.location = (0, 0, SIZE * 0.2)
-            body.scale = (0.95, 0.95, 1.05)
+    frames_per_cycle = end_frame - start_frame + 1
+    
+    for frame in range(start_frame, end_frame + 1):
+        scene.frame_set(frame)
+        t = (frame - start_frame) / frames_per_cycle
         
-        body.keyframe_insert(data_path="location", frame=frame)
+        # Compress forward, stretch back (like oozing forward)
+        compress_x = 1.0 + math.sin(t * math.pi * 4) * 0.15
+        compress_z = 1.0 - math.sin(t * math.pi * 4) * 0.1
+        body.scale = (compress_x, 0.95, compress_z)
         body.keyframe_insert(data_path="scale", frame=frame)
+        
+        # Ripple effect on edges
+        body.rotation_euler.z = math.sin(t * math.pi * 4) * 0.05
+        body.keyframe_insert(data_path="rotation_euler", frame=frame)
+        
+        # Eyes move with the ooze
+        for i, eye in enumerate(eyes):
+            offset = i * math.pi  # Offset between eyes
+            eye.location.z = SIZE * 0.15 + math.sin(t * math.pi * 4 + offset) * 0.05
+            eye.keyframe_insert(data_path="location", frame=frame)
 
 def animate_attack(body, eyes, start_frame, end_frame):
-    """Create attack animation - lunge forward"""
-    frames = end_frame - start_frame
+    """Splash attack animation - expand rapidly then return"""
+    scene = bpy.context.scene
     
-    # Wind up
-    wind_frame = start_frame + frames // 3
-    body.location = (0, SIZE * -0.3, SIZE * 0.1)
-    body.scale = (0.85, 0.85, 1.15)
-    body.keyframe_insert(data_path="location", frame=start_frame)
-    body.keyframe_insert(data_path="scale", frame=start_frame)
+    frames_per_cycle = end_frame - start_frame + 1
     
-    body.location = (0, SIZE * -0.5, SIZE * 0.2)
-    body.scale = (0.8, 0.8, 1.2)
-    body.keyframe_insert(data_path="location", frame=wind_frame)
-    body.keyframe_insert(data_path="scale", frame=wind_frame)
-    
-    # Strike
-    strike_frame = start_frame + 2 * frames // 3
-    body.location = (0, SIZE * 0.6, SIZE * 0.1)
-    body.scale = (1.2, 1.4, 0.8)
-    body.keyframe_insert(data_path="location", frame=strike_frame)
-    body.keyframe_insert(data_path="scale", frame=strike_frame)
-    
-    # Return
-    body.location = (0, 0, 0)
-    body.scale = (1.0, 1.0, 1.0)
-    body.keyframe_insert(data_path="location", frame=end_frame)
-    body.keyframe_insert(data_path="scale", frame=end_frame)
+    for frame in range(start_frame, end_frame + 1):
+        scene.frame_set(frame)
+        t = (frame - start_frame) / frames_per_cycle
+        
+        if t < 0.3:  # Wind up - compress
+            scale = 1.0 - (t / 0.3) * 0.3
+            height = 1.0 + (t / 0.3) * 0.4
+            body.scale = (scale, scale, height)
+        elif t < 0.5:  # Splash! - expand rapidly
+            progress = (t - 0.3) / 0.2
+            scale = 0.7 + progress * 0.9  # From 0.7 to 1.6
+            height = 1.4 - progress * 0.8  # From 1.4 to 0.6 (flatten)
+            body.scale = (scale, scale, height)
+        else:  # Return to normal
+            progress = (t - 0.5) / 0.5
+            scale = 1.6 - progress * 0.6  # From 1.6 back to 1.0
+            height = 0.6 + progress * 0.4  # From 0.6 back to 1.0
+            body.scale = (scale, scale, height)
+        
+        body.keyframe_insert(data_path="scale", frame=frame)
+        
+        # Eyes move dramatically during splash
+        for i, eye in enumerate(eyes):
+            if t < 0.5:  # During splash
+                eye.location.z = SIZE * 0.15 + (t / 0.5) * 0.2
+            else:  # Return
+                progress = (t - 0.5) / 0.5
+                eye.location.z = SIZE * 0.35 - progress * 0.2
+            eye.keyframe_insert(data_path="location", frame=frame)
 
 def animate_death(body, eyes, start_frame, end_frame):
-    """Create death animation - collapse and fade"""
-    frames = end_frame - start_frame
-    
-    # Start normal
-    body.location = (0, 0, 0)
-    body.scale = (1.0, 1.0, 1.0)
-    body.keyframe_insert(data_path="location", frame=start_frame)
-    body.keyframe_insert(data_path="scale", frame=start_frame)
-    
-    # Collapse
-    mid_frame = start_frame + frames // 2
-    body.location = (0, 0, SIZE * -0.3)
-    body.scale = (1.4, 1.4, 0.3)
-    body.keyframe_insert(data_path="location", frame=mid_frame)
-    body.keyframe_insert(data_path="scale", frame=mid_frame)
-    
-    # Flatten completely
-    body.location = (0, 0, SIZE * -0.5)
-    body.scale = (1.6, 1.6, 0.1)
-    body.keyframe_insert(data_path="location", frame=end_frame)
-    body.keyframe_insert(data_path="scale", frame=end_frame)
-
-def render_animation(animation_name, start_frame, end_frame):
-    """Render animation frames to sprite sheet"""
+    """Dry up and disappear - puddle shrinks and fades"""
     scene = bpy.context.scene
-    output_path = os.path.join(OUTPUT_DIR, ENEMY_NAME, animation_name)
+    
+    frames_per_cycle = end_frame - start_frame + 1
+    
+    # Animate material alpha for fade out
+    mat = body.data.materials[0]
+    alpha_node = mat.node_tree.nodes['Principled BSDF'].inputs['Alpha']
+    
+    for frame in range(start_frame, end_frame + 1):
+        scene.frame_set(frame)
+        t = (frame - start_frame) / frames_per_cycle
+        
+        # Puddle dries up - flattens and shrinks
+        shrink = 1.0 - t * 0.95  # Shrink to almost nothing
+        flatten = 1.0 - t * 0.9   # Flatten completely
+        body.scale = (shrink, shrink, flatten * 0.2)
+        body.keyframe_insert(data_path="scale", frame=frame)
+        
+        # Fade out transparency
+        alpha = 0.9 - t * 0.9
+        alpha_node.default_value = max(alpha, 0.0)
+        alpha_node.keyframe_insert(data_path="default_value", frame=frame)
+        
+        # Eyes sink and fade
+        for eye in eyes:
+            eye.location.z = SIZE * 0.15 * (1.0 - t)
+            eye.scale = Vector((1.0 - t * 0.5, 1.0 - t * 0.5, 1.0 - t * 0.5))
+            eye.keyframe_insert(data_path="location", frame=frame)
+            eye.keyframe_insert(data_path="scale", frame=frame)
+
+def render_animation(animation_name, start_frame, end_frame, output_path):
+    """Render animation frames to PNG sequence"""
     os.makedirs(output_path, exist_ok=True)
     
-    print(f"Rendering {animation_name} animation ({end_frame - start_frame + 1} frames)...")
+    scene = bpy.context.scene
+    scene.frame_start = start_frame
+    scene.frame_end = end_frame
     
     for frame in range(start_frame, end_frame + 1):
         scene.frame_set(frame)
         scene.render.filepath = os.path.join(output_path, f"frame_{frame - start_frame:04d}.png")
         bpy.ops.render.render(write_still=True)
-    
-    print(f"✓ {animation_name} complete")
 
+# Main execution
 def main():
-    """Main generation function"""
-    print(f"\n{'='*60}")
-    print(f"Generating Enemy: {ENEMY_NAME}")
-    print(f"Size: {SIZE}")
-    print(f"Body Color: {BODY_COLOR}")
-    print(f"Output: {OUTPUT_DIR}/{ENEMY_NAME}")
-    print(f"{'='*60}\n")
-    
-    # Setup
+    # Setup scene
     clear_scene()
-    setup_scene()
+    camera = setup_camera()
+    setup_lighting()
     
     # Create enemy
-    body = create_enemy_body()
+    body = create_puddle_body()
     eyes = create_eyes(body)
     
-    # Create animations
-    current_frame = 1
-    animations = []
+    # Animation frame ranges
+    idle_start = 1
+    idle_end = 4
+    walk_start = 5
+    walk_end = 12
+    attack_start = 13
+    attack_end = 18
+    death_start = 19
+    death_end = 26
     
-    for anim_name, frame_count in FRAMES_PER_ANIMATION.items():
-        start = current_frame
-        end = current_frame + frame_count - 1
-        
-        print(f"Creating {anim_name} animation (frames {start}-{end})...")
-        
-        if anim_name == "idle":
-            animate_idle(body, eyes, start, end)
-        elif anim_name == "walk":
-            animate_walk(body, eyes, start, end)
-        elif anim_name == "attack":
-            animate_attack(body, eyes, start, end)
-        elif anim_name == "death":
-            animate_death(body, eyes, start, end)
-        
-        animations.append((anim_name, start, end))
-        current_frame = end + 1
+    print("Creating idle animation (frames 1-4)...")
+    animate_idle(body, eyes, idle_start, idle_end)
     
-    # Render all animations
+    print("Creating walk animation (frames 5-12)...")
+    animate_walk(body, eyes, walk_start, walk_end)
+    
+    print("Creating attack animation (frames 13-18)...")
+    animate_attack(body, eyes, attack_start, attack_end)
+    
+    print("Creating death animation (frames 19-26)...")
+    animate_death(body, eyes, death_start, death_end)
+    
+    # Render animations
     print("\nRendering animations...")
-    for anim_name, start, end in animations:
-        render_animation(anim_name, start, end)
+    base_output = os.path.join(OUTPUT_DIR, ENEMY_NAME)
     
-    print(f"\n{'='*60}")
-    print(f"✓ Enemy '{ENEMY_NAME}' generated successfully!")
-    print(f"  Output: {OUTPUT_DIR}/{ENEMY_NAME}/")
-    print(f"  Animations: {', '.join(FRAMES_PER_ANIMATION.keys())}")
-    print(f"{'='*60}\n")
+    print(f"Rendering idle animation (4 frames)...")
+    render_animation("idle", idle_start, idle_end, os.path.join(base_output, "idle"))
+    
+    print(f"Rendering walk animation (8 frames)...")
+    render_animation("walk", walk_start, walk_end, os.path.join(base_output, "walk"))
+    
+    print(f"Rendering attack animation (6 frames)...")
+    render_animation("attack", attack_start, attack_end, os.path.join(base_output, "attack"))
+    
+    print(f"Rendering death animation (8 frames)...")
+    render_animation("death", death_start, death_end, os.path.join(base_output, "death"))
+    
+    print("\n" + "="*60)
+    print(f"Enemy '{ENEMY_NAME}' generation complete!")
+    print(f"Output location: {base_output}")
+    print("="*60)
 
 if __name__ == "__main__":
     main()

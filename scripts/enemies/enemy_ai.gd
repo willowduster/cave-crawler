@@ -46,37 +46,53 @@ func _setup_sprite_frames():
 	# Create sprite frames resource
 	var sprite_frames = SpriteFrames.new()
 	
-	# Load idle animation (4 frames)
+	# Load idle animation (4 frames: 0000-0003)
 	sprite_frames.add_animation("idle")
 	sprite_frames.set_animation_loop("idle", true)
 	sprite_frames.set_animation_speed("idle", 8.0)
 	for i in range(4):
-		var texture = load("res://assets/enemies/slime/idle/frame_%04d.png" % i)
-		sprite_frames.add_frame("idle", texture)
+		var path = "res://assets/enemies/slime/idle/frame_%04d.png" % i
+		var texture = load(path)
+		if texture:
+			sprite_frames.add_frame("idle", texture)
+		else:
+			push_error("Failed to load idle frame: " + path)
 	
-	# Load walk animation (8 frames)
+	# Load walk animation (8 frames: 0000-0007)
 	sprite_frames.add_animation("walk")
 	sprite_frames.set_animation_loop("walk", true)
 	sprite_frames.set_animation_speed("walk", 12.0)
 	for i in range(8):
-		var texture = load("res://assets/enemies/slime/walk/frame_%04d.png" % i)
-		sprite_frames.add_frame("walk", texture)
+		var path = "res://assets/enemies/slime/walk/frame_%04d.png" % i
+		var texture = load(path)
+		if texture:
+			sprite_frames.add_frame("walk", texture)
+		else:
+			push_error("Failed to load walk frame: " + path)
 	
-	# Load attack animation (6 frames)
+	# Load attack animation (6 frames: 0000-0005)
 	sprite_frames.add_animation("attack")
 	sprite_frames.set_animation_loop("attack", false)
 	sprite_frames.set_animation_speed("attack", 10.0)
 	for i in range(6):
-		var texture = load("res://assets/enemies/slime/attack/frame_%04d.png" % i)
-		sprite_frames.add_frame("attack", texture)
+		var path = "res://assets/enemies/slime/attack/frame_%04d.png" % i
+		var texture = load(path)
+		if texture:
+			sprite_frames.add_frame("attack", texture)
+		else:
+			push_error("Failed to load attack frame: " + path)
 	
-	# Load death animation (8 frames)
+	# Load death animation (8 frames: 0000-0007)
 	sprite_frames.add_animation("death")
 	sprite_frames.set_animation_loop("death", false)
 	sprite_frames.set_animation_speed("death", 8.0)
 	for i in range(8):
-		var texture = load("res://assets/enemies/slime/death/frame_%04d.png" % i)
-		sprite_frames.add_frame("death", texture)
+		var path = "res://assets/enemies/slime/death/frame_%04d.png" % i
+		var texture = load(path)
+		if texture:
+			sprite_frames.add_frame("death", texture)
+		else:
+			push_error("Failed to load death frame: " + path)
 	
 	# Apply to sprite
 	animated_sprite.sprite_frames = sprite_frames
