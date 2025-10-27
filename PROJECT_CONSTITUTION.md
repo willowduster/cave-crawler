@@ -2,7 +2,9 @@
 
 ## 🎯 Project Overview
 
-**Cave Crawler** is a 2D cave exploration game built with Godot 4.5.1, utilizing AI-powered Model Context Protocol (MCP) servers for accelerated development.
+**Cave Crawler** is an **isometric cave exploration game** (Diablo 2 style) built with Godot 4.5.1, utilizing AI-powered Model Context Protocol (MCP) servers for accelerated development.
+
+**Game Style**: Isometric action RPG with dungeon crawling, exploration, and combat in procedurally generated or hand-crafted cave systems.
 
 ## 🛠️ Technology Stack
 
@@ -47,77 +49,106 @@
 - [x] Create project structure
 - [x] Initialize Git repository
 - [x] Create test scene (verified working)
+- [x] Platformer proof-of-concept tested (pivoting to isometric)
 
-### Phase 2: Game Foundation 🔄 NEXT
-**Priority**: Core Mechanics
+### Phase 2: Isometric Foundation 🔄 IN PROGRESS
+**Priority**: Isometric Core Mechanics
 
-1. **Player Character**
-   - Create player sprite/model
-   - Implement basic movement (WASD/arrows)
-   - Add physics (gravity, collision)
-   - Implement jump mechanics
-   - Add animation states (idle, walk, jump, fall)
+**Design Pivot**: After successful platformer proof-of-concept, pivoting to **Diablo 2-style isometric gameplay** for better cave exploration experience.
 
-2. **Camera System**
-   - Follow player smoothly
-   - Set boundaries
-   - Add screen shake for impacts
+1. **Isometric Player Character**
+   - ✅ Basic movement working (proof-of-concept)
+   - 🔄 Convert to 8-directional isometric movement
+   - ❌ Remove jumping/gravity (not needed in isometric)
+   - ✅ Keep smooth acceleration/deceleration
+   - 🔄 Implement depth sorting (Y-sorting)
+   - 🔜 Add 8-directional animations (idle, walk)
 
-3. **Basic Cave Environment**
-   - Create tilemap system
-   - Design cave tiles (walls, floors, platforms)
-   - Implement collision layers
-   - Add background parallax layers
+2. **Isometric Camera System**
+   - ✅ Camera follow working
+   - 🔄 Adjust for isometric perspective
+   - 🔜 Fixed isometric angle (~26.565°)
+   - 🔜 Proper zoom level for visibility
 
-### Phase 3: Cave Generation
-**Priority**: Procedural Systems
+3. **Isometric Cave Environment**
+   - 🔜 Create isometric tileset (64x32 base tiles)
+   - 🔜 Cave floor tiles (stone, dirt, gravel)
+   - 🔜 Cave wall tiles (with vertical height)
+   - 🔜 Implement isometric TileMap
+   - 🔜 Add collision for walls
+   - 🔜 Test depth sorting with objects
 
-1. **Level Structure**
-   - Cave layout generation (procedural or hand-crafted)
-   - Room connections
-   - Vertical and horizontal navigation
-   - Safe spawn points
+### Phase 3: Isometric Gameplay
+**Priority**: Core Isometric Features
 
-2. **Environmental Hazards**
-   - Spikes
-   - Falling rocks
-   - Water/lava pools
-   - Darkness/lighting system
+1. **Movement & Physics**
+   - 8-directional movement (WASD)
+   - Click-to-move (optional, like Diablo)
+   - Collision with walls and obstacles
+   - Smooth pathfinding
+   - Running/walking toggle
 
-### Phase 4: Exploration Mechanics
-**Priority**: Gameplay Feel
+2. **Combat System**
+   - Click-to-attack or hotkey abilities
+   - Melee attack range and targeting
+   - Ranged attacks (if applicable)
+   - Damage and health system
+   - Enemy AI and pathfinding
 
-1. **Player Abilities**
-   - Double jump / dash
-   - Wall climbing
-   - Grappling hook
-   - Light source (torch/lantern)
+3. **Level Design**
+   - Interconnected cave rooms
+   - Corridors and passages
+   - Doors and transitions
+   - Hidden areas and secrets
+   - Proper depth layering
 
-2. **Items & Pickups**
-   - Health restoration
-   - Ability upgrades
+### Phase 4: Exploration & Content
+**Priority**: Game World
+
+1. **Cave Generation**
+   - Hand-crafted cave layouts (or procedural)
+   - Room variety (small, large, multi-level)
+   - Environmental storytelling
+   - Loot placement
+   - Enemy spawns
+
+2. **Environmental Features**
+   - Interactive objects (chests, doors)
+   - Stalactites and stalagmites
+   - Crystal formations
+   - Lighting sources (torches, crystals)
+   - Ambient darkness with local lights
+
+3. **Items & Pickups**
+   - Health potions
+   - Equipment/weapons
    - Collectibles
-   - Keys/access items
+   - Quest items
+   - Inventory system
 
-### Phase 5: Content & Polish
-**Priority**: Game Loop
+### Phase 5: Polish & Systems
+**Priority**: Game Feel
 
-1. **Enemies & Obstacles**
-   - Basic enemy AI
-   - Enemy types and behaviors
-   - Damage system
-   - Death and respawn
+1. **Visual Polish**
+   - Particle effects (dust, sparkles)
+   - Screen effects (damage flash, darkness)
+   - Smooth animations
+   - Proper shadows
+   - Lighting system
 
 2. **UI/UX**
-   - Health display
-   - Inventory system
-   - Minimap
+   - Health/mana bars
+   - Inventory interface
+   - Character stats
+   - Minimap (optional)
    - Menu system
 
 3. **Audio**
-   - Background music
-   - Sound effects
    - Ambient cave sounds
+   - Footstep sounds
+   - Combat sounds
+   - Music (atmospheric cave theme)
+   - UI feedback sounds
 
 ### Phase 6: Testing & Release
 **Priority**: Quality & Deployment
@@ -126,26 +157,46 @@
    - Balance adjustments
    - Bug fixes
    - Performance optimization
+   - Difficulty tuning
 
 2. **Packaging**
    - Build for target platforms
    - Create installer/packaging
    - Documentation
 
-## 🎨 Asset Creation Strategy
+## 🎨 Isometric Asset Creation Strategy
 
-### 2D Sprites
-- **Method 1**: Create in Blender, render to sprites
-  - Use Blender MCP to generate 3D models
-  - Render from fixed camera angle
-  - Export as PNG sequences
+### Isometric Tiles (Using Blender MCP)
+- **Tile Dimensions**: 64x32 pixels (2:1 ratio)
+- **Wall Height**: 64-96 pixels (includes vertical component)
+- **Perspective**: 26.565° isometric angle
+- **Lighting**: Consistent directional light
+- **Style**: Dark cave aesthetic with depth
+
+**Process**:
+1. Model tile in Blender (floor, wall sections)
+2. Set up isometric camera in Blender
+3. Render to sprite sheet
+4. Import into Godot as tileset
+5. Configure collision shapes
+
+### Character Sprites
+- **Directions**: 8 directions (or 4 with horizontal flip)
+- **Animations**: Idle, walk, attack, hurt, death
+- **Resolution**: Match tile scale (approx 64x64 base)
+- **Style**: Visible against dark cave backgrounds
+
+**Method 1**: Blender 3D → 2D render
+  - Create 3D character model
+  - Render from 8 isometric angles
+  - Export animation frames
   
-- **Method 2**: Manual creation
-  - Use any 2D image editor
-  - Save to `assets/` folder
-  - Import into Godot via Godot MCP
+**Method 2**: Manual pixel art/sprites
+  - Create in 2D image editor
+  - Ensure consistent perspective
+  - Export animation sequences
 
-- **Method 3**: Asset stores
+### Asset Organization
   - OpenGameArt.org
   - itch.io
   - Kenney.nl (free assets)
