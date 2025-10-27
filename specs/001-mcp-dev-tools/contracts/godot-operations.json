@@ -1,0 +1,282 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Godot MCP Operations",
+  "description": "MCP operation contracts for Godot Engine integration",
+  "version": "1.0.0",
+  "operations": {
+    "list_project_files": {
+      "description": "Returns the complete Godot project structure including scenes, scripts, and resources",
+      "parameters": {
+        "project_path": {
+          "type": "string",
+          "description": "Absolute path to Godot project root (containing project.godot)",
+          "required": true,
+          "example": "C:\\Users\\Ben\\code\\cave-crawler\\cave-crawler"
+        },
+        "file_types": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Filter by file extensions (empty = all)",
+          "required": false,
+          "default": [],
+          "example": [".tscn", ".gd", ".tres"]
+        }
+      },
+      "returns": {
+        "files": {
+          "type": "array",
+          "description": "List of file paths relative to project root",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {"type": "string"},
+              "type": {"type": "string"},
+              "size_bytes": {"type": "integer"}
+            }
+          }
+        },
+        "total_count": {"type": "integer"}
+      },
+      "errors": [
+        "ProjectNotFound: project.godot not found at specified path",
+        "PermissionDenied: cannot read project directory"
+      ]
+    },
+    "read_scene": {
+      "description": "Reads a Godot scene file (.tscn) and returns its content",
+      "parameters": {
+        "scene_path": {
+          "type": "string",
+          "description": "Relative path from project root to .tscn file",
+          "required": true,
+          "example": "scenes/player/player.tscn"
+        },
+        "parse_structure": {
+          "type": "boolean",
+          "description": "If true, also parse and return node hierarchy",
+          "required": false,
+          "default": false
+        }
+      },
+      "returns": {
+        "scene_content": {
+          "type": "string",
+          "description": "Raw .tscn file content"
+        },
+        "node_tree": {
+          "type": "object",
+          "description": "Parsed scene node hierarchy (if parse_structure=true)",
+          "required": false
+        }
+      },
+      "errors": [
+        "FileNotFound: scene_path does not exist",
+        "InvalidFormat: file is not a valid .tscn",
+        "PermissionDenied: cannot read file"
+      ]
+    },
+    "read_script": {
+      "description": "Reads a GDScript file (.gd) and returns its content",
+      "parameters": {
+        "script_path": {
+          "type": "string",
+          "description": "Relative path from project root to .gd file",
+          "required": true,
+          "example": "scripts/player_controller.gd"
+        }
+      },
+      "returns": {
+        "script_content": {
+          "type": "string",
+          "description": "Raw GDScript file content"
+        },
+        "line_count": {"type": "integer"}
+      },
+      "errors": [
+        "FileNotFound: script_path does not exist",
+        "InvalidFormat: file is not a .gd file",
+        "PermissionDenied: cannot read file"
+      ]
+    },
+    "create_scene": {
+      "description": "Creates a new Godot scene file from a template or specification",
+      "parameters": {
+        "scene_path": {
+          "type": "string",
+          "description": "Relative path for new .tscn file",
+          "required": true,
+          "example": "scenes/enemies/goblin.tscn"
+        },
+        "root_node_type": {
+          "type": "string",
+          "description": "Godot node type for root (e.g., CharacterBody2D, Node2D)",
+          "required": true,
+          "example": "CharacterBody2D"
+        },
+        "root_node_name": {
+          "type": "string",
+          "description": "Name for root node",
+          "required": false,
+          "default": "Root"
+        },
+        "attached_script": {
+          "type": "string",
+          "description": "Path to script to attach to root node (optional)",
+          "required": false,
+          "example": "scripts/goblin.gd"
+        }
+      },
+      "returns": {
+        "scene_path": {"type": "string"},
+        "file_size_bytes": {"type": "integer"},
+        "created": {"type": "boolean"}
+      },
+      "errors": [
+        "FileExists: scene already exists at path",
+        "InvalidNodeType: root_node_type not recognized",
+        "PermissionDenied: cannot write to directory"
+      ]
+    },
+    "create_script": {
+      "description": "Creates a new GDScript file with boilerplate code",
+      "parameters": {
+        "script_path": {
+          "type": "string",
+          "description": "Relative path for new .gd file",
+          "required": true,
+          "example": "scripts/enemy_ai.gd"
+        },
+        "template_type": {
+          "type": "string",
+          "enum": ["node", "resource", "class", "empty"],
+          "description": "Type of boilerplate to generate",
+          "required": false,
+          "default": "node"
+        },
+        "extends_class": {
+          "type": "string",
+          "description": "Class to extend (e.g., Node, CharacterBody2D)",
+          "required": false,
+          "example": "CharacterBody2D"
+        },
+        "class_name": {
+          "type": "string",
+          "description": "Optional class_name declaration",
+          "required": false
+        }
+      },
+      "returns": {
+        "script_path": {"type": "string"},
+        "file_size_bytes": {"type": "integer"},
+        "created": {"type": "boolean"}
+      },
+      "errors": [
+        "FileExists: script already exists at path",
+        "InvalidTemplate: template_type not recognized",
+        "PermissionDenied: cannot write to directory"
+      ]
+    },
+    "update_script": {
+      "description": "Modifies an existing GDScript file (adds function, changes code, etc.)",
+      "parameters": {
+        "script_path": {
+          "type": "string",
+          "description": "Relative path to .gd file to modify",
+          "required": true
+        },
+        "operation": {
+          "type": "string",
+          "enum": ["append", "replace", "insert_after"],
+          "description": "Type of modification",
+          "required": true
+        },
+        "search_pattern": {
+          "type": "string",
+          "description": "Pattern to find (for replace/insert_after)",
+          "required": false
+        },
+        "new_content": {
+          "type": "string",
+          "description": "Content to add or replace with",
+          "required": true
+        },
+        "backup": {
+          "type": "boolean",
+          "description": "Create .backup file before modifying",
+          "required": false,
+          "default": true
+        }
+      },
+      "returns": {
+        "modified": {"type": "boolean"},
+        "backup_path": {"type": "string"}
+      },
+      "errors": [
+        "FileNotFound: script_path does not exist",
+        "PatternNotFound: search_pattern not found in file",
+        "SyntaxError: new_content contains GDScript syntax errors",
+        "PermissionDenied: cannot modify file"
+      ]
+    },
+    "validate_syntax": {
+      "description": "Checks GDScript syntax without running the script",
+      "parameters": {
+        "script_path": {
+          "type": "string",
+          "description": "Relative path to .gd file to validate",
+          "required": true
+        }
+      },
+      "returns": {
+        "valid": {"type": "boolean"},
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": {"type": "integer"},
+              "column": {"type": "integer"},
+              "message": {"type": "string"}
+            }
+          }
+        }
+      },
+      "errors": [
+        "FileNotFound: script_path does not exist",
+        "GodotNotAvailable: Godot CLI not accessible for validation"
+      ]
+    },
+    "list_resources": {
+      "description": "Lists Godot resource files (.tres) in the project",
+      "parameters": {
+        "project_path": {
+          "type": "string",
+          "description": "Absolute path to Godot project root",
+          "required": true
+        },
+        "resource_type": {
+          "type": "string",
+          "description": "Filter by resource type (e.g., 'Texture', 'AudioStream')",
+          "required": false
+        }
+      },
+      "returns": {
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {"type": "string"},
+              "type": {"type": "string"},
+              "size_bytes": {"type": "integer"}
+            }
+          }
+        }
+      },
+      "errors": [
+        "ProjectNotFound: project.godot not found",
+        "PermissionDenied: cannot read resources"
+      ]
+    }
+  }
+}

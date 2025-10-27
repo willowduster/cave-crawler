@@ -1,0 +1,36 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\Users\\Ben\\code\\cave-crawler"
+      ]
+    },
+    "git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "C:\\Users\\Ben\\code\\cave-crawler"
+      ]
+    },
+    "godot": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\Ben\\code\\cave-crawler\\godot-mcp\\build\\index.js"
+      ],
+      "env": {
+        "GODOT_PATH": "C:\\Users\\Ben\\code\\cave-crawler\\bin\\Godot_v4.5.1-stable_win64.exe",
+        "DEBUG": "true"
+      }
+    },
+    "blender": {
+      "command": "uvx",
+      "args": [
+        "blender-mcp"
+      ]
+    }
+  }
+}

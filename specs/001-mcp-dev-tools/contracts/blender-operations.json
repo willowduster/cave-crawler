@@ -1,0 +1,321 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Blender MCP Operations",
+  "description": "MCP operation contracts for Blender 3D modeling integration",
+  "version": "1.0.0",
+  "operations": {
+    "create_primitive": {
+      "description": "Creates a basic 3D primitive object in Blender",
+      "parameters": {
+        "primitive_type": {
+          "type": "string",
+          "enum": ["cube", "sphere", "cylinder", "cone", "torus", "plane"],
+          "description": "Type of primitive to create",
+          "required": true
+        },
+        "location": {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "[x, y, z] position",
+          "required": false,
+          "default": [0, 0, 0]
+        },
+        "scale": {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "[x, y, z] scale",
+          "required": false,
+          "default": [1, 1, 1]
+        },
+        "name": {
+          "type": "string",
+          "description": "Object name in Blender",
+          "required": false,
+          "default": "Primitive"
+        }
+      },
+      "returns": {
+        "object_name": {"type": "string"},
+        "object_type": {"type": "string"},
+        "created": {"type": "boolean"}
+      },
+      "errors": [
+        "InvalidPrimitiveType: primitive_type not recognized",
+        "BlenderError: Blender operation failed"
+      ]
+    },
+    "modify_object": {
+      "description": "Modifies properties of an existing Blender object",
+      "parameters": {
+        "object_name": {
+          "type": "string",
+          "description": "Name of object to modify",
+          "required": true
+        },
+        "location": {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "New [x, y, z] position",
+          "required": false
+        },
+        "rotation": {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "New [x, y, z] rotation in radians",
+          "required": false
+        },
+        "scale": {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "New [x, y, z] scale",
+          "required": false
+        }
+      },
+      "returns": {
+        "modified": {"type": "boolean"},
+        "object_name": {"type": "string"}
+      },
+      "errors": [
+        "ObjectNotFound: object_name does not exist in scene",
+        "BlenderError: modification failed"
+      ]
+    },
+    "apply_material": {
+      "description": "Adds or modifies material properties on an object",
+      "parameters": {
+        "object_name": {
+          "type": "string",
+          "description": "Name of object to apply material to",
+          "required": true
+        },
+        "material_name": {
+          "type": "string",
+          "description": "Name for the material",
+          "required": false,
+          "default": "Material"
+        },
+        "color": {
+          "type": "array",
+          "items": {"type": "number", "minimum": 0, "maximum": 1},
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "RGBA color [r, g, b, a] (0-1 range)",
+          "required": false,
+          "default": [0.8, 0.8, 0.8, 1.0]
+        },
+        "metallic": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Metallic property (0-1)",
+          "required": false,
+          "default": 0.0
+        },
+        "roughness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Roughness property (0-1)",
+          "required": false,
+          "default": 0.5
+        }
+      },
+      "returns": {
+        "material_name": {"type": "string"},
+        "applied": {"type": "boolean"}
+      },
+      "errors": [
+        "ObjectNotFound: object_name does not exist",
+        "BlenderError: material application failed"
+      ]
+    },
+    "export_gltf": {
+      "description": "Exports Blender scene or selected objects as GLTF 2.0 format",
+      "parameters": {
+        "output_path": {
+          "type": "string",
+          "description": "Full path for .gltf/.glb file (must include extension)",
+          "required": true,
+          "example": "C:\\Users\\Ben\\models\\sword.glb"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["GLTF_SEPARATE", "GLB"],
+          "description": "GLTF_SEPARATE for .gltf+bin, GLB for single .glb file",
+          "required": false,
+          "default": "GLB"
+        },
+        "include_animations": {
+          "type": "boolean",
+          "description": "Export animation data if present",
+          "required": false,
+          "default": true
+        },
+        "selection_only": {
+          "type": "boolean",
+          "description": "Export only selected objects (false = all)",
+          "required": false,
+          "default": false
+        },
+        "apply_modifiers": {
+          "type": "boolean",
+          "description": "Apply modifiers before export",
+          "required": false,
+          "default": true
+        }
+      },
+      "returns": {
+        "file_path": {"type": "string"},
+        "file_size_bytes": {"type": "integer"},
+        "export_warnings": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      },
+      "errors": [
+        "InvalidPath: output_path not writable",
+        "ExportFailed: GLTF exporter error",
+        "NoObjects: nothing to export (scene empty or no selection)"
+      ]
+    },
+    "import_reference": {
+      "description": "Imports a reference image or 3D model into Blender",
+      "parameters": {
+        "file_path": {
+          "type": "string",
+          "description": "Path to file to import (image or 3D model)",
+          "required": true
+        },
+        "import_type": {
+          "type": "string",
+          "enum": ["image", "gltf", "obj", "fbx"],
+          "description": "Type of file being imported",
+          "required": true
+        },
+        "location": {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "Where to place imported object",
+          "required": false,
+          "default": [0, 0, 0]
+        }
+      },
+      "returns": {
+        "imported": {"type": "boolean"},
+        "object_names": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      },
+      "errors": [
+        "FileNotFound: file_path does not exist",
+        "UnsupportedFormat: import_type not supported",
+        "ImportFailed: Blender import error"
+      ]
+    },
+    "list_objects": {
+      "description": "Returns all objects currently in the Blender scene",
+      "parameters": {
+        "object_type": {
+          "type": "string",
+          "enum": ["MESH", "LIGHT", "CAMERA", "EMPTY", "ALL"],
+          "description": "Filter by object type",
+          "required": false,
+          "default": "ALL"
+        }
+      },
+      "returns": {
+        "objects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "type": {"type": "string"},
+              "location": {"type": "array", "items": {"type": "number"}},
+              "visible": {"type": "boolean"}
+            }
+          }
+        },
+        "total_count": {"type": "integer"}
+      },
+      "errors": [
+        "BlenderError: failed to query scene"
+      ]
+    },
+    "execute_script": {
+      "description": "Executes a custom Python script using Blender's bpy API",
+      "parameters": {
+        "script_content": {
+          "type": "string",
+          "description": "Python code to execute (must use bpy API)",
+          "required": true
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 300,
+          "description": "Script execution timeout in seconds",
+          "required": false,
+          "default": 60
+        }
+      },
+      "returns": {
+        "executed": {"type": "boolean"},
+        "stdout": {"type": "string"},
+        "stderr": {"type": "string"}
+      },
+      "errors": [
+        "ScriptError: Python script execution failed",
+        "Timeout: script exceeded time limit",
+        "SecurityError: script contains disallowed operations"
+      ]
+    },
+    "render_preview": {
+      "description": "Generates a preview render of the current scene (for thumbnails)",
+      "parameters": {
+        "output_path": {
+          "type": "string",
+          "description": "Path for output image file (.png)",
+          "required": true
+        },
+        "resolution": {
+          "type": "array",
+          "items": {"type": "integer"},
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[width, height] in pixels",
+          "required": false,
+          "default": [512, 512]
+        },
+        "camera_name": {
+          "type": "string",
+          "description": "Camera to render from (default = active camera)",
+          "required": false
+        }
+      },
+      "returns": {
+        "file_path": {"type": "string"},
+        "file_size_bytes": {"type": "integer"},
+        "render_time_seconds": {"type": "number"}
+      },
+      "errors": [
+        "NoCameraFound: no camera in scene or camera_name invalid",
+        "RenderFailed: Blender render error",
+        "InvalidPath: cannot write to output_path"
+      ]
+    }
+  }
+}

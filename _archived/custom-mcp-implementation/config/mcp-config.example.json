@@ -1,0 +1,39 @@
+{
+  "$schema": "./mcp-config.schema.json",
+  "version": "1.0",
+  "servers": {
+    "godot": {
+      "enabled": true,
+      "autoDetect": true,
+      "detectionMethods": ["registry", "path", "common_paths", "steam"],
+      "workingDirectory": "C:\\Users\\Ben\\code\\cave-crawler\\cave-crawler",
+      "operationTimeout": 30,
+      "environment": {},
+      "additionalArgs": []
+    },
+    "blender": {
+      "enabled": true,
+      "autoDetect": true,
+      "detectionMethods": ["registry", "path", "common_paths"],
+      "workingDirectory": "C:\\Users\\Ben\\code\\cave-crawler\\cave-crawler",
+      "operationTimeout": 60,
+      "environment": {},
+      "additionalArgs": ["--background"]
+    },
+    "gimp": {
+      "enabled": true,
+      "autoDetect": true,
+      "detectionMethods": ["registry", "path", "common_paths"],
+      "workingDirectory": "C:\\Users\\Ben\\code\\cave-crawler\\cave-crawler",
+      "operationTimeout": 45,
+      "environment": {},
+      "additionalArgs": ["--no-interface", "--batch-interpreter=python-fu-eval"]
+    }
+  },
+  "global": {
+    "logLevel": "INFO",
+    "logDirectory": "logs",
+    "maxConcurrentOperations": 5,
+    "operationTimeoutSeconds": 30
+  }
+}

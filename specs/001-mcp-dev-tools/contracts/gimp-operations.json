@@ -1,0 +1,313 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GIMP MCP Operations",
+  "description": "MCP operation contracts for GIMP image editing integration",
+  "version": "1.0.0",
+  "operations": {
+    "create_image": {
+      "description": "Creates a new image with specified dimensions and properties",
+      "parameters": {
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192,
+          "description": "Image width in pixels",
+          "required": true
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192,
+          "description": "Image height in pixels",
+          "required": true
+        },
+        "background_color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Hex color for background (e.g., #FFFFFF)",
+          "required": false,
+          "default": "#FFFFFF"
+        },
+        "has_alpha": {
+          "type": "boolean",
+          "description": "Include alpha channel for transparency",
+          "required": false,
+          "default": true
+        }
+      },
+      "returns": {
+        "image_id": {"type": "integer"},
+        "dimensions": {
+          "type": "object",
+          "properties": {
+            "width": {"type": "integer"},
+            "height": {"type": "integer"}
+          }
+        },
+        "created": {"type": "boolean"}
+      },
+      "errors": [
+        "InvalidDimensions: width or height out of range",
+        "MemoryError: image too large to create",
+        "GIMPError: GIMP operation failed"
+      ]
+    },
+    "open_image": {
+      "description": "Opens an existing image file in GIMP",
+      "parameters": {
+        "file_path": {
+          "type": "string",
+          "description": "Full path to image file",
+          "required": true
+        }
+      },
+      "returns": {
+        "image_id": {"type": "integer"},
+        "dimensions": {
+          "type": "object",
+          "properties": {
+            "width": {"type": "integer"},
+            "height": {"type": "integer"}
+          }
+        },
+        "format": {"type": "string"},
+        "has_alpha": {"type": "boolean"}
+      },
+      "errors": [
+        "FileNotFound: file_path does not exist",
+        "UnsupportedFormat: GIMP cannot open this file type",
+        "CorruptedFile: file is damaged or invalid"
+      ]
+    },
+    "add_layer": {
+      "description": "Adds a new layer to an existing image",
+      "parameters": {
+        "image_id": {
+          "type": "integer",
+          "description": "ID of image to add layer to",
+          "required": true
+        },
+        "layer_name": {
+          "type": "string",
+          "description": "Name for the new layer",
+          "required": false,
+          "default": "New Layer"
+        },
+        "fill_type": {
+          "type": "string",
+          "enum": ["transparent", "white", "black", "foreground", "background"],
+          "description": "How to fill the layer initially",
+          "required": false,
+          "default": "transparent"
+        },
+        "position": {
+          "type": "integer",
+          "description": "Layer stack position (0 = top)",
+          "required": false,
+          "default": 0
+        }
+      },
+      "returns": {
+        "layer_id": {"type": "integer"},
+        "layer_name": {"type": "string"},
+        "created": {"type": "boolean"}
+      },
+      "errors": [
+        "ImageNotFound: image_id invalid or image closed",
+        "GIMPError: failed to create layer"
+      ]
+    },
+    "apply_filter": {
+      "description": "Applies a filter or effect to a layer",
+      "parameters": {
+        "image_id": {
+          "type": "integer",
+          "description": "ID of image containing layer",
+          "required": true
+        },
+        "layer_id": {
+          "type": "integer",
+          "description": "ID of layer to apply filter to",
+          "required": true
+        },
+        "filter_name": {
+          "type": "string",
+          "enum": ["blur", "sharpen", "edge_detect", "emboss", "pixelate", "oil_paint"],
+          "description": "Filter to apply",
+          "required": true
+        },
+        "filter_params": {
+          "type": "object",
+          "description": "Filter-specific parameters",
+          "required": false,
+          "default": {}
+        }
+      },
+      "returns": {
+        "applied": {"type": "boolean"},
+        "filter_name": {"type": "string"}
+      },
+      "errors": [
+        "ImageNotFound: image_id invalid",
+        "LayerNotFound: layer_id invalid",
+        "UnsupportedFilter: filter_name not available",
+        "FilterError: filter application failed"
+      ]
+    },
+    "export_png": {
+      "description": "Exports image or layer as PNG file with transparency support",
+      "parameters": {
+        "image_id": {
+          "type": "integer",
+          "description": "ID of image to export",
+          "required": true
+        },
+        "output_path": {
+          "type": "string",
+          "description": "Full path for output .png file",
+          "required": true
+        },
+        "flatten": {
+          "type": "boolean",
+          "description": "Flatten all layers before export",
+          "required": false,
+          "default": false
+        },
+        "compression": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9,
+          "description": "PNG compression level (0=none, 9=max)",
+          "required": false,
+          "default": 6
+        }
+      },
+      "returns": {
+        "file_path": {"type": "string"},
+        "file_size_bytes": {"type": "integer"},
+        "exported": {"type": "boolean"}
+      },
+      "errors": [
+        "ImageNotFound: image_id invalid",
+        "InvalidPath: output_path not writable",
+        "ExportFailed: PNG export error"
+      ]
+    },
+    "resize_image": {
+      "description": "Resizes the entire image canvas or a specific layer",
+      "parameters": {
+        "image_id": {
+          "type": "integer",
+          "description": "ID of image to resize",
+          "required": true
+        },
+        "new_width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192,
+          "description": "New width in pixels",
+          "required": true
+        },
+        "new_height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192,
+          "description": "New height in pixels",
+          "required": true
+        },
+        "interpolation": {
+          "type": "string",
+          "enum": ["none", "linear", "cubic"],
+          "description": "Interpolation method for scaling",
+          "required": false,
+          "default": "cubic"
+        },
+        "resize_layers": {
+          "type": "boolean",
+          "description": "Also resize all layers (false = canvas only)",
+          "required": false,
+          "default": true
+        }
+      },
+      "returns": {
+        "resized": {"type": "boolean"},
+        "new_dimensions": {
+          "type": "object",
+          "properties": {
+            "width": {"type": "integer"},
+            "height": {"type": "integer"}
+          }
+        }
+      },
+      "errors": [
+        "ImageNotFound: image_id invalid",
+        "InvalidDimensions: new_width or new_height out of range",
+        "ResizeError: resize operation failed"
+      ]
+    },
+    "merge_layers": {
+      "description": "Merges visible layers or all layers into a single layer",
+      "parameters": {
+        "image_id": {
+          "type": "integer",
+          "description": "ID of image to merge layers in",
+          "required": true
+        },
+        "merge_mode": {
+          "type": "string",
+          "enum": ["visible", "all"],
+          "description": "Merge only visible layers or all layers",
+          "required": false,
+          "default": "visible"
+        }
+      },
+      "returns": {
+        "merged": {"type": "boolean"},
+        "resulting_layer_id": {"type": "integer"}
+      },
+      "errors": [
+        "ImageNotFound: image_id invalid",
+        "NoLayers: image has no layers to merge",
+        "MergeError: merge operation failed"
+      ]
+    },
+    "get_image_info": {
+      "description": "Returns information about an image including dimensions, layers, and format",
+      "parameters": {
+        "image_id": {
+          "type": "integer",
+          "description": "ID of image to query",
+          "required": true
+        }
+      },
+      "returns": {
+        "image_id": {"type": "integer"},
+        "dimensions": {
+          "type": "object",
+          "properties": {
+            "width": {"type": "integer"},
+            "height": {"type": "integer"}
+          }
+        },
+        "layer_count": {"type": "integer"},
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "layer_id": {"type": "integer"},
+              "name": {"type": "string"},
+              "visible": {"type": "boolean"},
+              "opacity": {"type": "number"}
+            }
+          }
+        },
+        "has_alpha": {"type": "boolean"},
+        "format": {"type": "string"}
+      },
+      "errors": [
+        "ImageNotFound: image_id invalid or image closed"
+      ]
+    }
+  }
+}

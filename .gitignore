@@ -1,0 +1,17 @@
+bin/
+
+# MCP server repositories (external dependencies)
+godot-mcp/
+blender-mcp/
+gimp-mcp/
+_archived/custom-mcp-implementation/temp-blender-mcp/
+_archived/custom-mcp-implementation/temp-godot-mcp/
+
+# Python virtual environments
+mcp-servers/venv/
+venv/
+.venv/
+
+# Godot editor metadata (optional - can commit if desired)
+.godot/editor/
+.godot/shader_cache/

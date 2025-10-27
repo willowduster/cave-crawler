@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cavecrawler.dev/schemas/mcp-config.schema.json",
+  "title": "MCP Development Tools Configuration",
+  "description": "Configuration schema for Godot, Blender, and GIMP MCP servers",
+  "type": "object",
+  "required": ["version", "servers"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Configuration schema version",
+      "pattern": "^1\\.0$"
+    },
+    "servers": {
+      "type": "object",
+      "description": "MCP server configurations",
+      "required": ["godot", "blender", "gimp"],
+      "properties": {
+        "godot": {
+          "$ref": "#/definitions/ServerConfig",
+          "description": "Godot Engine MCP server configuration"
+        },
+        "blender": {
+          "$ref": "#/definitions/ServerConfig",
+          "description": "Blender 3D MCP server configuration"
+        },
+        "gimp": {
+          "$ref": "#/definitions/ServerConfig",
+          "description": "GIMP image editor MCP server configuration"
+        }
+      },
+      "additionalProperties": false
+    },
+    "global": {
+      "type": "object",
+      "description": "Global MCP server settings",
+      "properties": {
+        "logLevel": {
+          "type": "string",
+          "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+          "default": "INFO",
+          "description": "Logging level for all servers"
+        },
+        "logDirectory": {
+          "type": "string",
+          "default": "logs",
+          "description": "Directory for log files (relative to mcp-servers/)"
+        },
+        "maxConcurrentOperations": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "default": 5,
+          "description": "Maximum number of concurrent operations across all servers"
+        },
+        "operationTimeoutSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600,
+          "default": 30,
+          "description": "Default timeout for operations (in seconds)"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "definitions": {
+    "ServerConfig": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether this server is enabled"
+        },
+        "executablePath": {
+          "type": "string",
+          "description": "Full path to the tool's executable (auto-detected if omitted)"
+        },
+        "workingDirectory": {
+          "type": "string",
+          "description": "Working directory for operations (defaults to Cave Crawler project root)"
+        },
+        "autoDetect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically detect tool installation if executablePath not provided"
+        },
+        "detectionMethods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["registry", "path", "common_paths", "steam"]
+          },
+          "default": ["registry", "path", "common_paths"],
+          "description": "Methods to use for tool detection (in order of preference)"
+        },
+        "operationTimeout": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600,
+          "description": "Override global operation timeout for this server (in seconds)"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Additional environment variables to set when running tool"
+        },
+        "additionalArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Additional command-line arguments to pass to tool"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
