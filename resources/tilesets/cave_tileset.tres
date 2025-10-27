@@ -1,0 +1,59 @@
+[gd_resource type="TileSet" load_steps=13 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/tiles/cave_floor_iso.png" id="1"]
+[ext_resource type="Texture2D" path="res://assets/tiles/cave_floor_dark.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/tiles/cave_floor_light.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/tiles/cave_wall_iso.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/tiles/cave_wall_corner_outer.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/tiles/cave_wall_corner_inner.png" id="6"]
+[ext_resource type="Texture2D" path="res://assets/tiles/prop_stalactite.png" id="7"]
+[ext_resource type="Texture2D" path="res://assets/tiles/prop_stalagmite.png" id="8"]
+[ext_resource type="Texture2D" path="res://assets/tiles/prop_rock_small.png" id="9"]
+[ext_resource type="Texture2D" path="res://assets/tiles/prop_rock_large.png" id="10"]
+[ext_resource type="Texture2D" path="res://assets/tiles/prop_crystal.png" id="11"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_floor"]
+texture = ExtResource("1")
+texture_region_size = Vector2i(64, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_floor_dark"]
+texture = ExtResource("2")
+texture_region_size = Vector2i(64, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_floor_light"]
+texture = ExtResource("3")
+texture_region_size = Vector2i(64, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wall"]
+texture = ExtResource("4")
+texture_region_size = Vector2i(64, 32)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-32, -16, 32, -16, 32, 16, -32, 16)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wall_corner_outer"]
+texture = ExtResource("5")
+texture_region_size = Vector2i(64, 32)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-32, -16, 32, -16, 32, 16, -32, 16)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wall_corner_inner"]
+texture = ExtResource("6")
+texture_region_size = Vector2i(64, 32)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-32, -16, 32, -16, 32, 16, -32, 16)
+
+[sub_resource type="PhysicsLayerTileData" id="PhysicsLayerTileData_1"]
+
+[resource]
+tile_size = Vector2i(64, 32)
+physics_layer_0/collision_layer = 1
+physics_layer_0/collision_mask = 1
+sources/0 = SubResource("TileSetAtlasSource_floor")
+sources/1 = SubResource("TileSetAtlasSource_floor_dark")
+sources/2 = SubResource("TileSetAtlasSource_floor_light")
+sources/3 = SubResource("TileSetAtlasSource_wall")
+sources/4 = SubResource("TileSetAtlasSource_wall_corner_outer")
+sources/5 = SubResource("TileSetAtlasSource_wall_corner_inner")

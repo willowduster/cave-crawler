@@ -1,0 +1,247 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" uid="uid://bpvw8jxk3rk8u" path="res://scenes/player/player.tscn" id="1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(40, 40)
+
+[node name="CaveLevel" type="Node2D"]
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1600.0
+offset_bottom = 1200.0
+color = Color(0.05, 0.05, 0.1, 1)
+z_index = -100
+
+[node name="Floor" type="Node2D" parent="."]
+z_index = -50
+
+[node name="StartRoom" type="Node2D" parent="Floor"]
+
+[node name="Floor1" type="ColorRect" parent="Floor/StartRoom"]
+offset_left = 100.0
+offset_top = 100.0
+offset_right = 400.0
+offset_bottom = 350.0
+color = Color(0.55, 0.45, 0.35, 1)
+
+[node name="Floor2" type="ColorRect" parent="Floor/StartRoom"]
+offset_left = 110.0
+offset_top = 110.0
+offset_right = 390.0
+offset_bottom = 340.0
+color = Color(0.6, 0.5, 0.4, 1)
+
+[node name="NorthCorridor" type="Node2D" parent="Floor"]
+
+[node name="Corridor1" type="ColorRect" parent="Floor/NorthCorridor"]
+offset_left = 220.0
+offset_top = 350.0
+offset_right = 280.0
+offset_bottom = 500.0
+color = Color(0.5, 0.4, 0.3, 1)
+
+[node name="EastRoom" type="Node2D" parent="Floor"]
+
+[node name="Floor3" type="ColorRect" parent="Floor/EastRoom"]
+offset_left = 450.0
+offset_top = 100.0
+offset_right = 750.0
+offset_bottom = 400.0
+color = Color(0.55, 0.45, 0.35, 1)
+
+[node name="Floor4" type="ColorRect" parent="Floor/EastRoom"]
+offset_left = 460.0
+offset_top = 110.0
+offset_right = 740.0
+offset_bottom = 390.0
+color = Color(0.65, 0.55, 0.45, 1)
+
+[node name="EastCorridor" type="Node2D" parent="Floor"]
+
+[node name="Corridor2" type="ColorRect" parent="Floor/EastCorridor"]
+offset_left = 400.0
+offset_top = 200.0
+offset_right = 450.0
+offset_bottom = 280.0
+color = Color(0.5, 0.4, 0.3, 1)
+
+[node name="NorthRoom" type="Node2D" parent="Floor"]
+
+[node name="Floor5" type="ColorRect" parent="Floor/NorthRoom"]
+offset_left = 150.0
+offset_top = 500.0
+offset_right = 500.0
+offset_bottom = 800.0
+color = Color(0.55, 0.45, 0.35, 1)
+
+[node name="Floor6" type="ColorRect" parent="Floor/NorthRoom"]
+offset_left = 160.0
+offset_top = 510.0
+offset_right = 490.0
+offset_bottom = 790.0
+color = Color(0.58, 0.48, 0.38, 1)
+
+[node name="SouthEastRoom" type="Node2D" parent="Floor"]
+
+[node name="Floor7" type="ColorRect" parent="Floor/SouthEastRoom"]
+offset_left = 550.0
+offset_top = 450.0
+offset_right = 850.0
+offset_bottom = 750.0
+color = Color(0.55, 0.45, 0.35, 1)
+
+[node name="Floor8" type="ColorRect" parent="Floor/SouthEastRoom"]
+offset_left = 560.0
+offset_top = 460.0
+offset_right = 840.0
+offset_bottom = 740.0
+color = Color(0.62, 0.52, 0.42, 1)
+
+[node name="ConnectingCorridor" type="Node2D" parent="Floor"]
+
+[node name="Corridor3" type="ColorRect" parent="Floor/ConnectingCorridor"]
+offset_left = 500.0
+offset_top = 400.0
+offset_right = 550.0
+offset_bottom = 500.0
+color = Color(0.5, 0.4, 0.3, 1)
+
+[node name="Walls" type="Node2D" parent="."]
+
+[node name="StartRoomWalls" type="Node2D" parent="Walls"]
+
+[node name="Wall1" type="StaticBody2D" parent="Walls/StartRoomWalls"]
+position = Vector2(250, 90)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/StartRoomWalls/Wall1"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(7.5, 0.5)
+
+[node name="Visual" type="ColorRect" parent="Walls/StartRoomWalls/Wall1"]
+offset_left = -150.0
+offset_top = -10.0
+offset_right = 150.0
+offset_bottom = 10.0
+color = Color(0.35, 0.3, 0.25, 1)
+
+[node name="Wall2" type="StaticBody2D" parent="Walls/StartRoomWalls"]
+position = Vector2(90, 225)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/StartRoomWalls/Wall2"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(0.5, 6.25)
+
+[node name="Visual" type="ColorRect" parent="Walls/StartRoomWalls/Wall2"]
+offset_left = -10.0
+offset_top = -125.0
+offset_right = 10.0
+offset_bottom = 125.0
+color = Color(0.35, 0.3, 0.25, 1)
+
+[node name="Wall3" type="StaticBody2D" parent="Walls/StartRoomWalls"]
+position = Vector2(410, 225)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/StartRoomWalls/Wall3"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(0.5, 6.25)
+
+[node name="Visual" type="ColorRect" parent="Walls/StartRoomWalls/Wall3"]
+offset_left = -10.0
+offset_top = -125.0
+offset_right = 10.0
+offset_bottom = 125.0
+color = Color(0.35, 0.3, 0.25, 1)
+
+[node name="Obstacles" type="Node2D" parent="."]
+
+[node name="Rock1" type="StaticBody2D" parent="Obstacles"]
+position = Vector2(150, 200)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Obstacles/Rock1"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(1, 1)
+
+[node name="Visual" type="ColorRect" parent="Obstacles/Rock1"]
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+color = Color(0.45, 0.4, 0.35, 1)
+
+[node name="Rock2" type="StaticBody2D" parent="Obstacles"]
+position = Vector2(350, 280)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Obstacles/Rock2"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(1.5, 1.5)
+
+[node name="Visual" type="ColorRect" parent="Obstacles/Rock2"]
+offset_left = -30.0
+offset_top = -30.0
+offset_right = 30.0
+offset_bottom = 30.0
+color = Color(0.45, 0.4, 0.35, 1)
+
+[node name="Rock3" type="StaticBody2D" parent="Obstacles"]
+position = Vector2(600, 250)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Obstacles/Rock3"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(1.2, 1.2)
+
+[node name="Visual" type="ColorRect" parent="Obstacles/Rock3"]
+offset_left = -24.0
+offset_top = -24.0
+offset_right = 24.0
+offset_bottom = 24.0
+color = Color(0.45, 0.4, 0.35, 1)
+
+[node name="Rock4" type="StaticBody2D" parent="Obstacles"]
+position = Vector2(300, 650)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Obstacles/Rock4"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(1, 1)
+
+[node name="Visual" type="ColorRect" parent="Obstacles/Rock4"]
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+color = Color(0.45, 0.4, 0.35, 1)
+
+[node name="Rock5" type="StaticBody2D" parent="Obstacles"]
+position = Vector2(700, 600)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Obstacles/Rock5"]
+shape = SubResource("RectangleShape2D_wall")
+scale = Vector2(1.8, 1.8)
+
+[node name="Visual" type="ColorRect" parent="Obstacles/Rock5"]
+offset_left = -36.0
+offset_top = -36.0
+offset_right = 36.0
+offset_bottom = 36.0
+color = Color(0.45, 0.4, 0.35, 1)
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(250, 225)
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+zoom = Vector2(1.2, 1.2)
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Instructions" type="Label" parent="UI"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 450.0
+offset_bottom = 100.0
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 16
+text = "CAVE CRAWLER - ISOMETRIC PROTOTYPE
+
+HOLD LEFT MOUSE to move
+Explore the connected cave rooms!
+Camera follows player"

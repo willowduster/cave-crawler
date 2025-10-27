@@ -1,24 +1,104 @@
 # Isometric Tileset Documentation
 
-## Generated Tiles
+## Generated Tiles (12 Total)
 
-### cave_floor_iso.png
-- **Type**: Floor tile
+### Floor Tiles (3 variations)
+
+#### cave_floor_iso.png
+- **Type**: Floor tile (standard)
 - **Size**: 128x64 pixels (rendered at 2x for quality)
 - **Actual tile size**: 64x32 pixels (2:1 isometric ratio)
-- **Color**: Dark stone (RGB: 64, 51, 38)
+- **Color**: Dark stone (RGB: 64, 51, 38 / #403326)
 - **Material**: Stone with high roughness (0.9)
 - **Details**: Subdivided for realistic geometry
 - **Use**: Main cave floor surfaces
 
-### cave_wall_iso.png
-- **Type**: Wall tile with height
+#### cave_floor_dark.png
+- **Type**: Floor tile (darker variation)
+- **Color**: Darker stone (RGB: 51, 38, 26 / #332619)
+- **Material**: Stone with high roughness (0.9)
+- **Use**: Shadowed areas, depth variation, visual interest
+
+#### cave_floor_light.png
+- **Type**: Floor tile (lighter variation)
+- **Color**: Lighter stone (RGB: 77, 64, 51 / #4D4033)
+- **Material**: Stone with high roughness (0.9)
+- **Use**: Illuminated areas, highlights, contrast
+
+### Wall Tiles (3 types)
+
+#### cave_wall_iso.png
+- **Type**: Wall tile with height (straight)
 - **Size**: 128x64 pixels base
 - **Height**: Includes vertical component for depth
-- **Color**: Slightly lighter stone (RGB: 77, 64, 51)
+- **Color**: Medium stone (RGB: 77, 64, 51 / #4D4033)
 - **Material**: Stone with medium-high roughness (0.85)
 - **Geometry**: Thin wall (0.1 thickness) with 0.5 height scale
-- **Use**: Cave walls, barriers, room boundaries
+- **Collision**: Required for boundaries
+- **Use**: Cave walls, barriers, corridor sides
+
+#### cave_wall_corner_outer.png
+- **Type**: Outer corner wall (L-shaped, convex)
+- **Shape**: Two perpendicular wall segments joined
+- **Color**: Medium stone (RGB: 77, 64, 51 / #4D4033)
+- **Collision**: Required
+- **Use**: Convex corners, room exteriors, turning points
+
+#### cave_wall_corner_inner.png
+- **Type**: Inner corner wall (concave)
+- **Shape**: Recessed corner
+- **Color**: Medium stone (RGB: 77, 64, 51 / #4D4033)
+- **Collision**: Required
+- **Use**: Concave corners, alcoves, indented areas
+
+### Props (6 decorative/obstacle elements)
+
+#### prop_stalactite.png
+- **Type**: Hanging ceiling formation
+- **Color**: Dark gray-blue (RGB: 38, 38, 46 / #26262E)
+- **Shape**: Cone pointing downward (6 vertices)
+- **Size**: 0.3 radius, 1.5 height
+- **Roughness**: 0.7
+- **Collision**: Usually none (decoration)
+- **Use**: Ceiling decoration, atmospheric detail
+
+#### prop_stalagmite.png
+- **Type**: Floor formation
+- **Color**: Dark gray-blue (RGB: 38, 38, 46 / #26262E)
+- **Shape**: Cone pointing upward (6 vertices)
+- **Size**: 0.4 radius, 1.2 height
+- **Roughness**: 0.7
+- **Collision**: Optional (depends on gameplay)
+- **Use**: Floor obstacles, natural formations
+
+#### prop_rock_small.png
+- **Type**: Small obstacle rock
+- **Color**: Gray-brown (RGB: 89, 77, 64 / #594D40)
+- **Shape**: Irregular icosphere (subdivisions: 1)
+- **Scale**: (1, 0.8, 0.6) - asymmetric
+- **Roughness**: 0.95 (very rough)
+- **Collision**: Recommended
+- **Use**: Small obstacles, scattered debris
+
+#### prop_rock_large.png
+- **Type**: Large obstacle rock
+- **Color**: Gray-brown (RGB: 89, 77, 64 / #594D40)
+- **Shape**: Larger irregular icosphere
+- **Scale**: (1.2, 1, 0.7) - asymmetric
+- **Roughness**: 0.95
+- **Collision**: Required
+- **Use**: Major obstacles, path blockers, cover
+
+#### prop_crystal.png
+- **Type**: Glowing crystal (magical element)
+- **Base Color**: Cyan (RGB: 77, 153, 204 / #4D99CC)
+- **Emission**: Bright cyan (RGB: 102, 204, 255 / #66CCFF)
+- **Emission Strength**: 2.0 (glows visibly!)
+- **Shape**: Elongated diamond (4-sided pyramid)
+- **Size**: 0.2 radius, 0.8 height
+- **Roughness**: 0.1 (very shiny, reflective)
+- **Collision**: Optional (collectible or obstacle)
+- **Use**: Light sources, collectibles, magic indicators, waypoints
 
 ## Rendering Specifications
 

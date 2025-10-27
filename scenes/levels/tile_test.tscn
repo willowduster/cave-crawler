@@ -1,0 +1,51 @@
+[gd_scene load_steps=4 format=3 uid="uid://test123tile"]
+
+[ext_resource type="Texture2D" uid="uid://ss56ye6bwqu5" path="res://assets/tiles/cave_floor_iso.png" id="1"]
+[ext_resource type="Texture2D" uid="uid://djsrjtvvxrqbt" path="res://assets/tiles/cave_wall_iso.png" id="2"]
+[ext_resource type="PackedScene" uid="uid://bpvw8jxk3rk8u" path="res://scenes/player/player.tscn" id="3"]
+
+[node name="TileTest" type="Node2D"]
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 800.0
+offset_bottom = 600.0
+color = Color(0.1, 0.1, 0.15, 1)
+z_index = -10
+
+[node name="FloorTile1" type="Sprite2D" parent="."]
+position = Vector2(200, 200)
+texture = ExtResource("1")
+
+[node name="FloorTile2" type="Sprite2D" parent="."]
+position = Vector2(264, 200)
+texture = ExtResource("1")
+
+[node name="FloorTile3" type="Sprite2D" parent="."]
+position = Vector2(328, 200)
+texture = ExtResource("1")
+
+[node name="WallTile1" type="Sprite2D" parent="."]
+position = Vector2(200, 150)
+texture = ExtResource("2")
+
+[node name="WallTile2" type="Sprite2D" parent="."]
+position = Vector2(264, 150)
+texture = ExtResource("2")
+
+[node name="Player" parent="." instance=ExtResource("3")]
+position = Vector2(400, 300)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(400, 300)
+zoom = Vector2(2, 2)
+
+[node name="Instructions" type="Label" parent="."]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 400.0
+offset_bottom = 80.0
+text = "TILE TEST - Verifying tiles render
+You should see floor and wall tiles above
+Click to move player
+
+If tiles are invisible, Blender render may have failed"
