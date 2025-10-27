@@ -19,6 +19,60 @@
 - **Asset Creation**: Blender 4.5 (for 3D-rendered 2D sprites)
 - **Image Editing**: Manual tools (GIMP, Photoshop, or online editors)
 
+### 🔧 Portable Tooling Requirements
+**CONSTITUTION**: All development tools MUST be portable across workstations.
+
+- **Godot Executables**: Always located in `./bin/`
+  - Example: `./bin/Godot_v4.5.1-stable_win64.exe`
+  - Scripts reference: `../../bin/Godot_v4.x.x-stable_win64.exe`
+  
+- **Blender Executables**: Always located in `./bin/`
+  - Example: `./bin/blender-4.5.0-windows-x64/blender.exe`
+  - Scripts reference: `../../bin/blender-4.x.x-windows-x64/blender.exe`
+  
+- **Path Resolution**: All scripts use relative paths from project root
+  - ❌ NEVER: `C:\Users\Ben\code\cave-crawler\...`
+  - ✅ ALWAYS: `os.path.join(os.path.dirname(__file__), '..', 'assets', ...)`
+  - ✅ ALWAYS: `./assets/...` for simple relative paths
+
+- **Cross-Workstation Compatibility**:
+  - No hardcoded absolute paths
+  - No username-specific paths (e.g., `/Users/Ben/`)
+  - Scripts work on any machine with tools in `./bin/`
+  - Git ignores `./bin/` (tools are installed locally, not versioned)
+
+### 🤖 MCP Server Portability (AI Assistant Integration)
+
+**IMPORTANT**: MCP servers are **OPTIONAL** - they enable AI assistance but are **NOT required for development**.
+
+**Core development is 100% portable**:
+- ✅ Godot in `./bin/` - Run game, edit scenes
+- ✅ Blender in `./bin/` - Generate assets via scripts
+- ✅ All code/assets versioned in Git
+- ✅ No MCP needed to develop the game
+
+**MCP servers provide AI assistance** (optional, per-workstation setup):
+
+- **Godot MCP** ⚠️ Semi-Portable
+  - Requires: Node.js + build step (5 min per workstation)
+  - Benefit: AI can create scenes, run game
+  - Optional: You can do this manually in Godot Editor
+  
+- **Blender MCP** ❌ NOT Portable
+  - Requires: Manual addon install + UI clicks (10 min per workstation)
+  - Benefit: AI can create custom 3D models
+  - **ALTERNATIVE**: Use portable `blender_scripts/` for repeatable workflows
+  
+- **Filesystem MCP** ✅ Portable (Official Anthropic)
+- **Git MCP** ✅ Portable (Official Anthropic)
+
+**Recommendation**: 
+- Core development: Use portable tools (no MCP needed)
+- AI assistance: Optional MCP setup for interactive help
+- Asset generation: Always use portable `blender_scripts/`
+
+See [PORTABLE_DEVELOPMENT_SETUP.md](PORTABLE_DEVELOPMENT_SETUP.md) for 100% portable workflow.
+
 ### MCP Servers (Fully Operational)
 1. **Godot MCP** ✅
    - Launch and control Godot editor
@@ -51,32 +105,40 @@
 - [x] Create test scene (verified working)
 - [x] Platformer proof-of-concept tested (pivoting to isometric)
 
-### Phase 2: Isometric Foundation 🔄 IN PROGRESS
+### Phase 2: Isometric Foundation ✅ COMPLETE
 **Priority**: Isometric Core Mechanics
 
-**Design Pivot**: After successful platformer proof-of-concept, pivoting to **Diablo 2-style isometric gameplay** for better cave exploration experience.
+**Design Pivot**: After successful platformer proof-of-concept, pivoted to **Diablo 2-style isometric gameplay** for better cave exploration experience.
 
-1. **Isometric Player Character**
-   - ✅ Basic movement working (proof-of-concept)
-   - 🔄 Convert to 8-directional isometric movement
-   - ❌ Remove jumping/gravity (not needed in isometric)
-   - ✅ Keep smooth acceleration/deceleration
-   - 🔄 Implement depth sorting (Y-sorting)
-   - 🔜 Add 8-directional animations (idle, walk)
+1. **Isometric Player Character** ✅
+   - ✅ Click-to-move and hold-to-move controls
+   - ✅ Smooth acceleration/deceleration
+   - ✅ Depth sorting (Y-sorting) with z-index fix
+   - ✅ Rotation to face movement direction
 
-2. **Isometric Camera System**
+2. **Isometric Camera System** ✅
    - ✅ Camera follow working
-   - 🔄 Adjust for isometric perspective
-   - 🔜 Fixed isometric angle (~26.565°)
-   - 🔜 Proper zoom level for visibility
+   - ✅ 1920x1080 resolution
+   - ✅ Fixed camera for isometric view
 
-3. **Isometric Cave Environment**
-   - 🔜 Create isometric tileset (64x32 base tiles)
-   - 🔜 Cave floor tiles (stone, dirt, gravel)
-   - 🔜 Cave wall tiles (with vertical height)
-   - 🔜 Implement isometric TileMap
-   - 🔜 Add collision for walls
-   - 🔜 Test depth sorting with objects
+3. **Procedural Cave Environment** ✅
+   - ✅ Cellular automata generation (150x120 grid)
+   - ✅ 30-50 rooms per cave
+   - ✅ Corridor connections (3 tiles wide)
+   - ✅ Room detection and validation
+   - ✅ SNES-style textures (16 total)
+   - ✅ Detailed cave floors with gradients, depressions, scattered debris
+   - ✅ Randomized obstacle sizes (0.7x-1.3x)
+   - ✅ Collision with walls and obstacles
+   - ✅ Debug console (toggleable)
+
+4. **Portable Tooling** ✅
+   - ✅ Godot in `./bin/` directory
+   - ✅ Blender in `./bin/` directory  
+   - ✅ Blender automation scripts with `run_blender.ps1`
+   - ✅ All scripts use relative paths
+   - ✅ No hardcoded absolute paths
+   - ✅ Cross-workstation compatible
 
 ### Phase 3: Isometric Gameplay
 **Priority**: Core Isometric Features

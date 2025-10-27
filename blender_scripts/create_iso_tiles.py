@@ -13,12 +13,14 @@ import bpy
 import math
 import os
 
-# Configuration
+# Configuration - use portable relative paths
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.join(SCRIPT_DIR, '..')
 TILE_SIZE = 64  # Base width in pixels
 TILE_HEIGHT_RATIO = 0.5  # Height is 0.5 of width (64x32)
 ISO_ANGLE = math.atan(0.5)  # 26.565 degrees
 RENDER_RESOLUTION = 128  # Higher res for better quality, will scale down
-OUTPUT_DIR = "C:/Users/Ben/code/cave-crawler/assets/tiles"
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'assets', 'tiles')
 
 def setup_scene():
     """Clear scene and set up for isometric rendering"""

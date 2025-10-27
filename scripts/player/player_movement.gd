@@ -76,7 +76,8 @@ func _physics_process(delta):
 func _process(_delta):
 	# Depth sorting for isometric layering
 	# Objects with higher Y position appear in front
-	z_index = int(global_position.y)
+	# Normalize to reasonable z-index range (0-100)
+	z_index = int(global_position.y / 64.0)
 	
 	# Rotate sprite to face movement direction (optional visual)
 	# For now just store the angle, we'll use it for animation direction later
