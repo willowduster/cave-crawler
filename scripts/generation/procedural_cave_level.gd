@@ -7,9 +7,14 @@ const CaveGenerator = preload("res://scripts/generation/cave_generator.gd")
 const DebugConsole = preload("res://scripts/ui/debug_console.gd")
 const AStarPathfinder = preload("res://scripts/pathfinding/astar_pathfinder.gd")
 
+# Enemy scene
+var EnemyScene = preload("res://scenes/enemies/enemy_base.tscn")
+
 @onready var cave_generator = CaveGenerator.new()
 @onready var debug_console: DebugConsole = null
 @onready var pathfinder: AStarPathfinder = AStarPathfinder.new()
+
+var enemies: Array = []
 
 const TILE_SIZE = 64  # SNES-style higher resolution tiles
 
@@ -84,6 +89,10 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_setup_debug_console()
 	
+	# Spawn enemies
+	await get_tree().process_frame
+	_spawn_enemies()
+	
 	# Update stats
 	_update_stats()
 
@@ -116,6 +125,7 @@ func regenerate_cave() -> void:
 	cave_data = cave_generator.generate_cave()
 	_build_cave_visuals()
 	_spawn_player()
+	_spawn_enemies()
 	_update_stats()
 	
 	if debug_console:
@@ -414,3 +424,45 @@ func get_spawn_position() -> Vector2:
 		spawn_tile.x * TILE_SIZE + TILE_SIZE / 2,
 		spawn_tile.y * TILE_SIZE + TILE_SIZE / 2
 	)
+
+func get_pathfinder() -> AStarPathfinder:
+	return pathfinder
+
+func _spawn_enemies() -> void:
+	print("Spawning enemies...")
+	
+	# Clear existing enemies
+	for enemy in enemies:
+		if is_instance_valid(enemy):
+			enemy.queue_free()
+	enemies.clear()
+	
+	# Spawn enemies in each room (1-3 enemies per room)
+	var rooms = cave_data.get("rooms", [])
+	for room in rooms:
+		var enemy_count = randi_range(1, 3)
+		
+		for i in range(enemy_count):
+			var spawn_pos = _get_random_room_position(room)
+			if spawn_pos != Vector2.ZERO:
+				_spawn_enemy(spawn_pos)
+	
+	print("Spawned %d enemies" % enemies.size())
+
+func _get_random_room_position(room_tiles: Array) -> Vector2:
+	# Get a random position within a room
+	# room_tiles is an array of Vector2i tile positions
+	if room_tiles.is_empty():
+		return Vector2.ZERO
+	
+	var random_tile = room_tiles[randi() % room_tiles.size()]
+	return Vector2(
+		random_tile.x * TILE_SIZE + TILE_SIZE / 2,
+		random_tile.y * TILE_SIZE + TILE_SIZE / 2
+	)
+
+func _spawn_enemy(position: Vector2) -> void:
+	var enemy = EnemyScene.instantiate()
+	enemy.position = position
+	add_child(enemy)
+	enemies.append(enemy)
