@@ -7,6 +7,8 @@ const SPEED = 150.0
 const ACCELERATION = 600.0
 const FRICTION = 800.0
 const ARRIVAL_DISTANCE = 5.0  # How close to target before stopping
+const WAYPOINT_THRESHOLD = 32.0  # Distance to consider waypoint reached (larger = smoother)
+const LOOK_AHEAD_DISTANCE = 80.0  # How far ahead to look for smoother turns
 const TILE_SIZE = 64  # Tile size for pathfinding
 
 # Movement state
@@ -18,7 +20,7 @@ var mouse_held: bool = false  # Track if left mouse button is held
 # Pathfinding
 var path: Array = []  # Array of Vector2 waypoints
 var current_waypoint_index: int = 0
-var pathfinder: AStarPathfinder = null
+var pathfinder = null  # AStarPathfinder instance
 
 # Direction facing (in radians, 0 = right)
 var facing_angle: float = 0.0
@@ -27,7 +29,7 @@ func _ready():
 	print("Isometric player with A* pathfinding ready - Click or hold to move!")
 
 ## Set the pathfinder reference
-func set_pathfinder(pf: AStarPathfinder) -> void:
+func set_pathfinder(pf) -> void:
 	pathfinder = pf
 	print("Pathfinder connected to player!")
 
@@ -93,7 +95,7 @@ func _physics_process(delta):
 			var waypoint_distance = global_position.distance_to(target_position)
 			
 			# If we've reached the current waypoint, move to next
-			if waypoint_distance <= ARRIVAL_DISTANCE * 2:  # Slightly larger threshold for waypoints
+			if waypoint_distance <= WAYPOINT_THRESHOLD:
 				current_waypoint_index += 1
 				
 				if current_waypoint_index < path.size():
@@ -105,8 +107,22 @@ func _physics_process(delta):
 						has_target = false
 						path.clear()
 		
-		# Calculate direction to current target
-		var direction = (target_position - global_position).normalized()
+		# Calculate movement target with look-ahead for smoother turns
+		var move_target = target_position
+		
+		# If there's a next waypoint, blend towards it for smoother curves
+		if path.size() > 0 and current_waypoint_index < path.size() - 1:
+			var next_waypoint = path[current_waypoint_index + 1]
+			var dist_to_current = global_position.distance_to(target_position)
+			
+			# As we get closer to current waypoint, start moving towards next one
+			if dist_to_current < LOOK_AHEAD_DISTANCE:
+				var blend_factor = 1.0 - (dist_to_current / LOOK_AHEAD_DISTANCE)
+				blend_factor = clamp(blend_factor * 0.5, 0.0, 0.5)  # Max 50% blend
+				move_target = target_position.lerp(next_waypoint, blend_factor)
+		
+		# Calculate direction to move target
+		var direction = (move_target - global_position).normalized()
 		var distance = global_position.distance_to(target_position)
 		
 		# Check if we've arrived at final destination
@@ -116,11 +132,13 @@ func _physics_process(delta):
 			# Stop moving
 			velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
 		else:
-			# Move toward target
-			velocity = velocity.move_toward(direction * SPEED, ACCELERATION * delta)
+			# Move toward target with smooth acceleration
+			var target_velocity = direction * SPEED
+			velocity = velocity.move_toward(target_velocity, ACCELERATION * delta)
 			
-			# Update facing direction
-			facing_angle = direction.angle()
+			# Update facing direction smoothly
+			if velocity.length() > 10.0:  # Only update facing when actually moving
+				facing_angle = velocity.angle()
 	else:
 		# Apply friction when no target
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)

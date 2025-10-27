@@ -6,13 +6,16 @@
 
 - ✅ Procedural cave generation (cellular automata, 150x120 grid)
 - ✅ Isometric click-to-move player controls
+- ✅ A* pathfinding with intelligent navigation
+  - Smooth path following with look-ahead
+  - Line-of-sight path smoothing
+  - Natural corner cutting
 - ✅ SNES-style pixel art textures (16 unique sprites with detailed gradients)
 - ✅ Natural cave floors with depressions, cracks, and scattered details
 - ✅ Debug console system (toggleable with Backspace)
 - ✅ Randomized obstacle sizes (0.7x-1.3x variation)
 - ✅ Z-index depth sorting fixed
 - ✅ 100% portable tooling (executables in `./bin/`)
-- ⏳ A* pathfinding (next)
 - ⏳ Enemy AI
 - ⏳ Combat system
 

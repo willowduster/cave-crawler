@@ -113,7 +113,54 @@ func find_path(start_pos: Vector2, end_pos: Vector2, tile_size: int = 64) -> Arr
 		var world_pos = grid_to_world(Vector2i(int(point.x), int(point.y)), tile_size)
 		world_path.append(world_pos)
 	
+	# Smooth the path by removing unnecessary waypoints
+	if world_path.size() > 2:
+		world_path = _smooth_path(world_path, tile_size)
+	
 	return world_path
+
+## Smooth path by removing unnecessary waypoints using line-of-sight
+func _smooth_path(path: Array, tile_size: int) -> Array:
+	if path.size() <= 2:
+		return path
+	
+	var smoothed = [path[0]]  # Always keep start point
+	var current_idx = 0
+	
+	while current_idx < path.size() - 1:
+		var furthest_visible = current_idx + 1
+		
+		# Check how far ahead we can see
+		for i in range(current_idx + 2, path.size()):
+			if _has_line_of_sight(path[current_idx], path[i], tile_size):
+				furthest_visible = i
+			else:
+				break
+		
+		# Add the furthest visible point
+		if furthest_visible < path.size():
+			smoothed.append(path[furthest_visible])
+		
+		current_idx = furthest_visible
+	
+	return smoothed
+
+## Check if there's a clear line of sight between two points
+func _has_line_of_sight(from: Vector2, to: Vector2, tile_size: int) -> bool:
+	var distance = from.distance_to(to)
+	var steps = int(distance / (tile_size * 0.5))  # Check every half tile
+	
+	if steps < 2:
+		return true
+	
+	for i in range(1, steps):
+		var t = float(i) / float(steps)
+		var check_pos = from.lerp(to, t)
+		
+		if not is_walkable(check_pos, tile_size):
+			return false
+	
+	return true
 
 ## Convert world position to grid coordinates
 func world_to_grid(world_pos: Vector2, tile_size: int) -> Vector2i:
