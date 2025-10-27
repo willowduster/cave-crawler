@@ -11,6 +11,7 @@ var height: int = 0
 
 ## AStar2D node for efficient pathfinding
 var astar: AStar2D = null
+@export var debug_logs: bool = false
 
 ## Initialize pathfinder with grid data
 func setup(cave_grid: Array, grid_width: int, grid_height: int) -> void:
@@ -21,7 +22,8 @@ func setup(cave_grid: Array, grid_width: int, grid_height: int) -> void:
 	# Create AStar2D graph
 	astar = AStar2D.new()
 	
-	print("Setting up pathfinding grid (%dx%d)..." % [width, height])
+	if debug_logs:
+		print("Setting up pathfinding grid (%dx%d)..." % [width, height])
 	
 	# Add all walkable tiles as points
 	for y in range(height):
@@ -37,7 +39,8 @@ func setup(cave_grid: Array, grid_width: int, grid_height: int) -> void:
 			if not grid[y][x]:
 				_connect_neighbors(x, y)
 	
-	print("Pathfinding setup complete! Points: %d" % astar.get_point_count())
+	if debug_logs:
+		print("Pathfinding setup complete! Points: %d" % astar.get_point_count())
 
 ## Convert grid coordinates to unique point ID
 func _get_point_id(x: int, y: int) -> int:
@@ -86,19 +89,29 @@ func find_path(start_pos: Vector2, end_pos: Vector2, tile_size: int = 64) -> Arr
 	if not _is_valid_pos(start_grid.x, start_grid.y):
 		push_warning("Start position out of bounds: %s" % start_grid)
 		return []
-	
+
 	if not _is_valid_pos(end_grid.x, end_grid.y):
 		push_warning("End position out of bounds: %s" % end_grid)
 		return []
-	
-	# Check if positions are walkable
+
+	# If start or end land on a wall, try to snap to nearest walkable tile
 	if grid[start_grid.y][start_grid.x]:
-		push_warning("Start position is a wall: %s" % start_grid)
-		return []
-	
+		var snapped = _find_nearest_walkable(start_grid.x, start_grid.y, 10)
+		if snapped == null:
+			push_warning("Start position is a wall and no nearby walkable tile found: %s" % start_grid)
+			return []
+		else:
+			# overwrite start_grid with snapped position
+			start_grid = snapped
+
 	if grid[end_grid.y][end_grid.x]:
-		push_warning("End position is a wall: %s" % end_grid)
-		return []
+		var snapped_e = _find_nearest_walkable(end_grid.x, end_grid.y, 10)
+		if snapped_e == null:
+			push_warning("End position is a wall and no nearby walkable tile found: %s" % end_grid)
+			return []
+		else:
+			# overwrite end_grid with snapped position
+			end_grid = snapped_e
 	
 	# Get point IDs
 	var start_id = _get_point_id(start_grid.x, start_grid.y)
@@ -186,3 +199,44 @@ func is_walkable(world_pos: Vector2, tile_size: int = 64) -> bool:
 	if not _is_valid_pos(grid_pos.x, grid_pos.y):
 		return false
 	return not grid[grid_pos.y][grid_pos.x]
+
+
+## Find nearest walkable tile (BFS/spiral) up to max_radius tiles away
+func _find_nearest_walkable(x: int, y: int, max_radius: int):
+	if not _is_valid_pos(x, y):
+		return null
+	if not grid[y][x]:
+		return Vector2i(x, y)
+
+	# Breadth-first search expanding outward
+	var visited = {}
+	var queue = []
+	queue.append(Vector2i(x, y))
+	visited["%d,%d" % [x, y]] = true
+	var radius = 0
+
+	while queue.size() > 0 and radius <= max_radius:
+		var level_size = queue.size()
+		for i in range(level_size):
+			var p = queue.pop_front()
+			var px = p.x
+			var py = p.y
+
+			# Check the 4 neighbors
+			var dirs = [Vector2i(1,0), Vector2i(-1,0), Vector2i(0,1), Vector2i(0,-1)]
+			for d in dirs:
+				var nx = px + d.x
+				var ny = py + d.y
+				var key = "%d,%d" % [nx, ny]
+				if not _is_valid_pos(nx, ny):
+					continue
+				if visited.has(key):
+					continue
+				visited[key] = true
+				if not grid[ny][nx]:
+					return Vector2i(nx, ny)
+				queue.append(Vector2i(nx, ny))
+
+		radius += 1
+
+	return null

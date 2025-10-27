@@ -21,3 +21,6 @@ venv/
 
 # Godot runtime logs
 logs/
+
+# PixelLab API configuration (contains API key)
+scripts/pixellab_config.py

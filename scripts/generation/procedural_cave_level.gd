@@ -9,12 +9,17 @@ const AStarPathfinder = preload("res://scripts/pathfinding/astar_pathfinder.gd")
 
 # Enemy scene
 var EnemyScene = preload("res://scenes/enemies/enemy_base.tscn")
+@export var spawn_enemy_type := "goblin"
+@export var debug_logs: bool = false
+@export var debug_console_log_to_file: bool = true
+@export var debug_console_log_path: String = "logs/debug_console_live.log"
 
 @onready var cave_generator = CaveGenerator.new()
 @onready var debug_console: DebugConsole = null
 @onready var pathfinder: AStarPathfinder = AStarPathfinder.new()
 
 var enemies: Array = []
+@export var debug_force_spawn_at_player: bool = false
 
 const TILE_SIZE = 64  # SNES-style higher resolution tiles
 
@@ -56,6 +61,17 @@ func _init() -> void:
 		prop_textures[key] = load(prop_texture_paths[key])
 
 func _ready() -> void:
+	# Ensure a runtime leak tracker is present to monitor dynamic CanvasItems
+	# Create a LeakTracker as a child of this level so it's available during visual build
+	if not has_node("LeakTracker"):
+		var lt_path = "res://scripts/debug/leak_tracker.gd"
+		if ResourceLoader.exists(lt_path):
+			var lt_script = load(lt_path)
+			var lt_node = Node.new()
+			lt_node.name = "LeakTracker"
+			lt_node.set_script(lt_script)
+			add_child(lt_node)
+
 	# Add generator as child
 	add_child(cave_generator)
 	cave_generator.generation_complete.connect(_on_generation_complete)
@@ -67,11 +83,13 @@ func _ready() -> void:
 	cave_generator.smoothing_iterations = 4  # Less smoothing for more irregular caves
 	
 	# Generate the cave
-	print("Generating procedural cave...")
+	if debug_logs:
+		print("Generating procedural cave...")
 	cave_data = cave_generator.generate_cave()
 	
 	# Setup pathfinder with cave grid
-	print("Setting up pathfinding...")
+	if debug_logs:
+		print("Setting up pathfinding...")
 	pathfinder.setup(cave_data.grid, cave_data.width, cave_data.height)
 	
 	# Build the visual scene
@@ -96,13 +114,23 @@ func _ready() -> void:
 	# Update stats
 	_update_stats()
 
+	# Note: use per-enemy LEAK-DEBUG prints to track CanvasItem creation/freeing
+
 func _setup_debug_console() -> void:
 	var console_node = get_node_or_null("DebugConsole")
 	if console_node:
 		debug_console = console_node as DebugConsole
-		print("Debug console found!")
+		if debug_logs:
+			print("Debug console found!")
+		# If requested, enable file logging on the debug console
+		if debug_console_log_to_file:
+			# set properties; guard with has_method in case the script isn't attached yet
+			if debug_console.has_method("set_meta") or true:
+				debug_console.log_to_file = true
+				debug_console.log_file_path = debug_console_log_path
 	else:
-		print("Warning: Debug console not found")
+		if debug_logs:
+			print("Warning: Debug console not found")
 
 func _process(_delta: float) -> void:
 	if debug_console:
@@ -121,7 +149,8 @@ func _input(event: InputEvent) -> void:
 			get_tree().quit()
 
 func regenerate_cave() -> void:
-	print("\n=== REGENERATING CAVE ===")
+	if debug_logs:
+		print("\n=== REGENERATING CAVE ===")
 	cave_data = cave_generator.generate_cave()
 	_build_cave_visuals()
 	_spawn_player()
@@ -138,15 +167,18 @@ func _spawn_player() -> void:
 	if player:
 		var spawn_pos = get_spawn_position()
 		player.global_position = spawn_pos
-		print("Player spawned at: ", spawn_pos)
+		if debug_logs:
+			print("Player spawned at: ", spawn_pos)
 
 func _connect_player_pathfinder() -> void:
 	var player = get_node_or_null("Player")
 	if player and player.has_method("set_pathfinder"):
 		player.set_pathfinder(pathfinder)
-		print("Pathfinder connected to player")
+		if debug_logs:
+			print("Pathfinder connected to player")
 	else:
-		print("Warning: Could not connect pathfinder to player")
+		if debug_logs:
+			print("Warning: Could not connect pathfinder to player")
 
 func _update_stats() -> void:
 	if not debug_console:
@@ -179,10 +211,12 @@ func _update_debug_info() -> void:
 	debug_console.set_debug(debug_text)
 
 func _on_generation_complete(data: Dictionary) -> void:
-	print("Generation complete signal received!")
+	if debug_logs:
+		print("Generation complete signal received!")
 
 func _build_cave_visuals() -> void:
-	print("Building cave visuals...")
+	if debug_logs:
+		print("Building cave visuals...")
 	
 	# Clear existing visuals
 	for rect in floor_rects:
@@ -208,10 +242,11 @@ func _build_cave_visuals() -> void:
 	# Place obstacles
 	_place_obstacles()
 	
-	print("Cave visuals complete!")
-	print("  Floor rects: %d" % floor_rects.size())
-	print("  Wall bodies: %d" % wall_bodies.size())
-	print("  Obstacles: %d" % obstacles.size())
+	if debug_logs:
+		print("Cave visuals complete!")
+		print("  Floor rects: %d" % floor_rects.size())
+		print("  Wall bodies: %d" % wall_bodies.size())
+		print("  Obstacles: %d" % obstacles.size())
 
 func _build_floor_tiles() -> void:
 	var grid = cave_data.grid
@@ -277,6 +312,12 @@ func _create_floor_rect(grid_x: int, grid_y: int, grid_width: int, grid_height: 
 		add_child(tile_bg)
 		floor_rects.append(tile_bg)
 
+		# Register with runtime leak tracker if present
+		# LeakTracker is added as a child of this level; find directly
+		var lt_check = get_node_or_null("LeakTracker")
+		if lt_check != null and lt_check.has_method("register"):
+			lt_check.register(tile_bg, "floor_tile_bg_%d_%d" % [grid_x, grid_y])
+
 func _create_floor_tile(grid_x: int, grid_y: int) -> void:
 	var sprite = Sprite2D.new()
 	
@@ -297,6 +338,11 @@ func _create_floor_tile(grid_x: int, grid_y: int) -> void:
 	
 	add_child(sprite)
 	floor_rects.append(sprite)
+
+	# Register with runtime leak tracker if present
+	var lt_check2 = get_node_or_null("LeakTracker")
+	if lt_check2 != null and lt_check2.has_method("register"):
+		lt_check2.register(sprite, "floor_tile_%d_%d" % [grid_x, grid_y])
 
 func _build_wall_collisions() -> void:
 	var grid = cave_data.grid
@@ -436,7 +482,15 @@ func _spawn_enemies() -> void:
 		if is_instance_valid(enemy):
 			enemy.queue_free()
 	enemies.clear()
-	
+	# If debug flag set, spawn a single enemy at the player's position for immediate visibility
+	if debug_force_spawn_at_player:
+		var player = get_node_or_null("Player")
+		if player != null:
+			_spawn_enemy(player.global_position)
+			print("Spawned 1 debug enemy at player position")
+			print("Spawned %d enemies" % enemies.size())
+			return
+
 	# Spawn enemies in each room (1-3 enemies per room)
 	var rooms = cave_data.get("rooms", [])
 	for room in rooms:
@@ -446,6 +500,13 @@ func _spawn_enemies() -> void:
 			var spawn_pos = _get_random_room_position(room)
 			if spawn_pos != Vector2.ZERO:
 				_spawn_enemy(spawn_pos)
+
+	# If nothing spawned (rare), fall back to spawning a single enemy at the player for visibility
+	if enemies.size() == 0:
+		var player = get_node_or_null("Player")
+		if player != null:
+			_spawn_enemy(player.global_position)
+			print("No enemies were randomly spawned — spawning one at player for visibility")
 	
 	print("Spawned %d enemies" % enemies.size())
 
@@ -464,5 +525,41 @@ func _get_random_room_position(room_tiles: Array) -> Vector2:
 func _spawn_enemy(position: Vector2) -> void:
 	var enemy = EnemyScene.instantiate()
 	enemy.position = position
+	# If a specific enemy type is requested, set it on the instance (needs enemy_ai.gd to expose enemy_name)
+	if spawn_enemy_type != "":
+		# Set the exported property directly; use set() which is available on all Objects.
+		# Wrapping in a try block isn't needed in GDScript, but we guard with has_method just in case.
+		if enemy.has_method("set"):
+			enemy.set("enemy_name", spawn_enemy_type)
+		else:
+			# As a last resort, try to set as a property (silently skip if unavailable)
+			enemy.enemy_name = spawn_enemy_type if "enemy_name" in enemy else null
 	add_child(enemy)
 	enemies.append(enemy)
+	print("_spawn_enemy: instantiated enemy at %s" % position)
+
+func _exit_tree() -> void:
+	# Explicitly free dynamic CanvasItems so their RIDs are released before engine shutdown
+	var lt = get_node_or_null("LeakTracker")
+	for s in floor_rects:
+		if is_instance_valid(s):
+			var p = s.get_parent()
+			if p != null:
+				p.remove_child(s)
+				if lt != null and lt.has_method("unregister"):
+					lt.unregister(s)
+				s.queue_free()
+	floor_rects.clear()
+
+	for w in wall_bodies:
+		if is_instance_valid(w):
+			var p2 = w.get_parent()
+			if p2 != null:
+				p2.remove_child(w)
+				w.queue_free()
+	wall_bodies.clear()
+
+	# After freeing, ask LeakTracker to report what (if anything) remains
+	# Reuse the previously-resolved `lt` variable to avoid redeclaration in this scope
+	if lt != null and lt.has_method("report_tracked"):
+		lt.report_tracked()

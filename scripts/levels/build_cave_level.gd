@@ -2,12 +2,15 @@ extends Node2D
 
 # This script builds the isometric cave level on ready
 var tilemap: TileMapLayer
+@export var debug_logs: bool = false
 
 func _ready():
 	tilemap = $TileMapLayer
-	print("Building cave room...")
+	if debug_logs:
+		print("Building cave room...")
 	build_cave_room()
-	print("Cave room complete!")
+	if debug_logs:
+		print("Cave room complete!")
 
 func build_cave_room():
 	# Build a 20x12 cave room with walls
@@ -54,6 +57,7 @@ func build_cave_room():
 	tilemap.set_cell(Vector2i(6, 4), 1, Vector2i(0, 0))
 	wall_count += 3
 	
-	print("Cave room built: %d floor tiles, %d wall tiles" % [floor_count, wall_count])
-	print("TileMap position: ", tilemap.position)
-	print("TileSet tile size: ", tilemap.tile_set.tile_size)
+	if debug_logs:
+		print("Cave room built: %d floor tiles, %d wall tiles" % [floor_count, wall_count])
+		print("TileMap position: ", tilemap.position)
+		print("TileSet tile size: ", tilemap.tile_set.tile_size)

@@ -21,17 +21,24 @@ var mouse_held: bool = false  # Track if left mouse button is held
 var path: Array = []  # Array of Vector2 waypoints
 var current_waypoint_index: int = 0
 var pathfinder = null  # AStarPathfinder instance
+@export var debug_logs: bool = false
 
 # Direction facing (in radians, 0 = right)
 var facing_angle: float = 0.0
+@export var max_health: int = 20
+var health: int = max_health
+var _hurt_timer: float = 0.0
+const HURT_FLASH_TIME = 0.25
 
 func _ready():
-	print("Isometric player with A* pathfinding ready - Click or hold to move!")
+	if debug_logs:
+		print("Isometric player with A* pathfinding ready - Click or hold to move!")
 
 ## Set the pathfinder reference
 func set_pathfinder(pf) -> void:
 	pathfinder = pf
-	print("Pathfinder connected to player!")
+	if debug_logs:
+		print("Pathfinder connected to player!")
 
 func _input(event):
 	# Left click to move
@@ -48,7 +55,8 @@ func _input(event):
 		# Right click to attack (placeholder)
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 			var attack_target = get_global_mouse_position()
-			print("Attack at: ", attack_target)
+			if debug_logs:
+				print("Attack at: ", attack_target)
 			is_attacking = true
 			mouse_held = false
 			has_target = false
@@ -63,7 +71,8 @@ func _set_move_target(pos: Vector2) -> void:
 		has_target = true
 		is_attacking = false
 		path.clear()
-		print("Moving directly to: ", pos)
+		if debug_logs:
+			print("Moving directly to: ", pos)
 		return
 	
 	# Calculate path using A*
@@ -75,14 +84,16 @@ func _set_move_target(pos: Vector2) -> void:
 		is_attacking = false
 		# Set first waypoint as target
 		target_position = path[current_waypoint_index]
-		print("Path found with %d waypoints to: %s" % [path.size(), pos])
+		if debug_logs:
+			print("Path found with %d waypoints to: %s" % [path.size(), pos])
 	else:
 		# No path found - try direct movement
 		target_position = pos
 		has_target = true
 		is_attacking = false
 		path.clear()
-		print("No path found, moving directly to: ", pos)
+		if debug_logs:
+			print("No path found, moving directly to: ", pos)
 
 func _physics_process(delta):
 	# If mouse is held, continuously update target to cursor position
@@ -155,6 +166,32 @@ func _process(_delta):
 	# Rotate sprite to face movement direction (optional visual)
 	# For now just store the angle, we'll use it for animation direction later
 	rotation = facing_angle
+
+	# Hurt flash timer: lerp ColorRect back to normal
+	_hurt_timer = max(0.0, _hurt_timer - _delta)
+	var color_rect = $ColorRect
+	if color_rect:
+		if _hurt_timer > 0:
+			# flash red
+			color_rect.color = Color(1, 0.3, 0.3, 1)
+		else:
+			color_rect.color = Color(0.3, 0.6, 1, 1)
+
+## Apply damage to player
+func take_damage(amount: int) -> void:
+	health -= amount
+	if debug_logs:
+		print("Player took %d damage (hp=%d)" % [amount, health])
+	_hurt_timer = HURT_FLASH_TIME
+	if health <= 0:
+		_on_death()
+
+func _on_death() -> void:
+	if debug_logs:
+		print("Player died — respawning...")
+	# Simple respawn: reset health and position to origin spawn (player node has initial position in scene)
+	health = max_health
+	global_position = Vector2(1600, 1280)
 
 func get_facing_direction() -> int:
 	# Get 8-directional facing for animations

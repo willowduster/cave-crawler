@@ -14,3 +14,13 @@ script = ExtResource("1_enemy_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_collision")
+
+[node name="NameLabel" type="Label" parent="."]
+text = ""
+rect_position = Vector2(0, -32)
+z_index = 1000
+
+[node name="StateLabel" type="Label" parent="."]
+text = ""
+rect_position = Vector2(0, 28)
+z_index = 1000
